@@ -17,6 +17,7 @@ Route::group([
 ], function () {
     //API Consulta Banco de Dados
     Route::get('/servidor/cpf/{cpf}', 'ServidorController@buscaServidorPorCpf');
+    Route::get('/servidores', 'ServidorController@buscaTodosServidores');
 //    Route::get('/empenho/ano/{ano}/ug/{ug}/', 'EmpenhoController@buscaEmpenhoPorAnoUg');
 //    Route::get('/empenhodetalhado/{dado}', 'EmpenhodetalhadoController@buscaEmpenhodetalhadoPorNumeroEmpenho');
 //    Route::get('/ordembancaria/favorecido/{dado}', 'OrdembancariaController@buscaOrdembancariaPorCnpj');

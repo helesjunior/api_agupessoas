@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Documentacao;
 use App\Models\Servidor;
+use App\Models\Mvcsservidor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use function foo\func;
@@ -19,5 +20,15 @@ class ServidorController extends Controller
         })->get();
 
         return json_encode($servidor);
+    }
+
+    public function buscaTodosServidores()
+    {
+
+        $servidores = Mvcsservidor::all();
+
+
+
+        return json_encode($servidores);
     }
 }
