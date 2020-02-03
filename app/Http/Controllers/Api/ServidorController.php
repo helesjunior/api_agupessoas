@@ -8,12 +8,15 @@ use App\Models\Servidor;
 use App\Models\Mvcsservidor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use phpDocumentor\Reflection\Types\Integer;
 use function foo\func;
 
 class ServidorController extends Controller
 {
-    public function buscaServidorPorCpf($cpf)
+    public function buscaServidorPorCpf(Integer $cpf)
     {
+        dd('Entrei', $cpf);
+
         $servidor = Servidor::whereHas('documentacao', function ($query) use ($cpf){
             $query->where('nr_documentacao',$cpf)
             ->where('id_tipo_documentacao',1);
