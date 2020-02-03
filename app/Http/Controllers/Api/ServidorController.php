@@ -13,7 +13,7 @@ use function foo\func;
 
 class ServidorController extends Controller
 {
-    public function buscaServidorPorCpf(Integer $cpf)
+    public function buscaServidorPorCpf(int $cpf)
     {
         dd($cpf);
 
