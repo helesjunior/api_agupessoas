@@ -13,7 +13,7 @@ use function foo\func;
 
 class ServidorController extends Controller
 {
-    public function buscaServidorPorCpf(int $cpf)
+    public function buscaServidorPorCpf($cpf)
     {
 
         $servidor = Servidor::whereHas('documentacao', function ($query) use ($cpf){
@@ -21,8 +21,6 @@ class ServidorController extends Controller
             ->where('id_tipo_documentacao',1);
         })->get();
 
-
-        dd($servidor);
 
         return json_encode($servidor);
     }
