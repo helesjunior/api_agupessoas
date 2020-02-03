@@ -15,13 +15,14 @@ class ServidorController extends Controller
 {
     public function buscaServidorPorCpf(int $cpf)
     {
-        dd($cpf);
 
         $servidor = Servidor::whereHas('documentacao', function ($query) use ($cpf){
             $query->where('nr_documentacao',$cpf)
             ->where('id_tipo_documentacao',1);
         })->get();
 
+
+        dd($servidor);
 
         return json_encode($servidor);
     }
