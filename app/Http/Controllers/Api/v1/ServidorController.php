@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Documentacao;
@@ -16,11 +16,10 @@ class ServidorController extends Controller
     public function buscaServidorPorCpf($cpf)
     {
 
-        $servidor = Servidor::whereHas('documentacao', function ($query) use ($cpf){
-            $query->where('nr_documentacao',$cpf)
-            ->where('id_tipo_documentacao',1);
+        $servidor = Servidor::whereHas('documentacao', function ($query) use ($cpf) {
+            $query->where('nr_documentacao', $cpf)
+                ->where('id_tipo_documentacao', 1);
         })->get();
-
 
         return json_encode($servidor);
     }
@@ -30,8 +29,7 @@ class ServidorController extends Controller
 
         $servidores = Mvcsservidor::all();
 
-
-
         return json_encode($servidores);
     }
+
 }
