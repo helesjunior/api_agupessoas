@@ -16,6 +16,7 @@ class Base extends Model
      * @param string $procedure
      * @param array $params
      * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
      */
     public function retornaDadosPorCursorDeProcedure($package = '', $procedure = '', $params = [])
     {
@@ -38,6 +39,7 @@ class Base extends Model
      * @param string $package
      * @param string $procedure
      * @return string
+     * @author Anderson Sathler <asathler@gmail.com>
      */
     public function retornaPackageProcedure($package = '', $procedure = '')
     {
@@ -57,6 +59,7 @@ class Base extends Model
      *
      * @param array $dados
      * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
      */
     public function converteArrayDadosUtf8($dados = [])
     {

@@ -9,32 +9,27 @@ use Illuminate\Http\Request;
 class PessoaController extends Controller
 {
 
-    public function listarForcaTrabalho(Request $request)
+    public function __construct()
     {
         if (!$this->validaParametros()) {
-            return ['erro' => true];
+            die('{"erro":true}');
         }
+    }
 
+    public function listarForcaTrabalho(Request $request)
+    {
         $model = new Pessoa();
         return $model->retornaDadosForcaTrabalho();
     }
 
     public function listarFuncoes(Request $request)
     {
-        if (!$this->validaParametros()) {
-            return ['erro' => true];
-        }
-
         $model = new Pessoa();
         return $model->retornaDadosFuncoes();
     }
 
     public function listarAntiguidade(Request $request)
     {
-        if (!$this->validaParametros()) {
-            return ['erro' => true];
-        }
-
         $model = new Pessoa();
         $dataBase = $this->retornaDataBase();
         return $model->retornaDadosAntiguidade($dataBase);
@@ -42,27 +37,34 @@ class PessoaController extends Controller
 
     public function listarCessoes()
     {
-        return 'cessoes';
+        $model = new Pessoa();
+        return $model->retornaDadosCessoes();
     }
 
     public function listarProvimentos()
     {
-        return 'provimentos';
+        $model = new Pessoa();
+        return $model->retornaDadosProvimentos();
     }
 
     public function listarRequisicoes()
     {
-        return 'requisicoes';
+        $model = new Pessoa();
+        return $model->retornaDadosRequisicoes();
     }
 
     public function listarVacancias()
     {
-        return 'vacancias';
+        $model = new Pessoa();
+        return $model->retornaDadosVacancias();
     }
 
     /**
+     * Valida parâmetros informados na requisição para exibição ou não dos dados
+     *
      * @param string $dataBase
      * @return bool
+     * @author Anderson Sathler <asathler@gmail.com>
      */
     public function validaParametros()
     {
@@ -71,6 +73,12 @@ class PessoaController extends Controller
         return !$validador->fails();
     }
 
+    /**
+     * Retorna array contendo as regras de validação das requisições
+     *
+     * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
+     */
     public function retornaRegras()
     {
         // Token apresenta problemas no get se houver os caracteres [+] ou [/]
@@ -84,6 +92,7 @@ class PessoaController extends Controller
 
         return $regras;
     }
+
 
     public function retornaDataBase()
     {

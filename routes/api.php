@@ -29,10 +29,10 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('forca-trabalho', 'PessoaController@listarForcaTrabalho');
     Route::get('funcoes', 'PessoaController@listarFuncoes');
     Route::get('antiguidade', 'PessoaController@listarAntiguidade')->name('antiguidade');
-//    Route::get('cessoes', 'PessoaController@listarCessoes');
-//    Route::get('provimentos', 'PessoaController@listarProvimentos');
-//    Route::get('requisicoes', 'PessoaController@listarRequisicoes');
-//    Route::get('vacancias', 'PessoaController@listarVacancias');
+    Route::get('cessoes', 'PessoaController@listarCessoes');
+    Route::get('provimentos', 'PessoaController@listarProvimentos');
+    Route::get('requisicoes', 'PessoaController@listarRequisicoes');
+    Route::get('vacancias', 'PessoaController@listarVacancias');
 });
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {

@@ -35,7 +35,7 @@ class RotasTest extends TestCase
      */
     public function testRotaForcaTrabalho()
     {
-        $rota = $this->rotaBase . 'forca-trabalho';
+        $rota = $this->retornaRotaCompleta('forca-trabalho');
         $this->verificaRota($rota);
     }
 
@@ -46,8 +46,10 @@ class RotasTest extends TestCase
      */
     public function testRotaFuncoes()
     {
-        $rota = $this->rotaBase . 'funcoes';
+        $rota = $this->retornaRotaCompleta('funcoes');
         $this->verificaRota($rota);
+
+
     }
 
     /**
@@ -57,7 +59,7 @@ class RotasTest extends TestCase
      */
     public function testRotaAntiguidade()
     {
-        $rota = $this->rotaBase . 'antiguidade';
+        $rota = $this->retornaRotaCompleta('antiguidade', '&database=20200305');
         $this->verificaRota($rota);
     }
 
@@ -66,9 +68,9 @@ class RotasTest extends TestCase
      *
      * @return void
      */
-    public function comentado_testRotaCessoes()
+    public function testRotaCessoes()
     {
-        $rota = $this->rotaBase . 'cessoes';
+        $rota = $this->retornaRotaCompleta('cessoes');
         $this->verificaRota($rota);
     }
 
@@ -77,9 +79,9 @@ class RotasTest extends TestCase
      *
      * @return void
      */
-    public function comentado_testRotaProvimentos()
+    public function testRotaProvimentos()
     {
-        $rota = $this->rotaBase . 'provimentos';
+        $rota = $this->retornaRotaCompleta('provimentos');
         $this->verificaRota($rota);
     }
 
@@ -88,9 +90,9 @@ class RotasTest extends TestCase
      *
      * @return void
      */
-    public function comentado_testRotaRequisicoes()
+    public function testRotaRequisicoes()
     {
-        $rota = $this->rotaBase . 'requisicoes';
+        $rota = $this->retornaRotaCompleta('requisicoes');
         $this->verificaRota($rota);
     }
 
@@ -99,10 +101,19 @@ class RotasTest extends TestCase
      *
      * @return void
      */
-    public function comentado_testRotaVacancias()
+    public function testRotaVacancias()
     {
-        $rota = $this->rotaBase . 'vacancias';
+        $rota = $this->retornaRotaCompleta('vacancias');
         $this->verificaRota($rota);
+    }
+
+    private function retornaRotaCompleta($rotaNome, $params = '')
+    {
+        $rota = $this->rotaBase . 'forca-trabalho';
+        $rota .= '?token=base64:ktqQXu6aW44hadYaHTV89m8FDCi5Pu6XlXL@AugnC9E=';
+        $rota .= $params;
+
+        return $rota;
     }
 
     /**
