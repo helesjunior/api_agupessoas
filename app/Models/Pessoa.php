@@ -129,7 +129,7 @@ class Pessoa extends Base
         $sql .= 'SELECT ';
         $sql .= '    P.DT_EXERCICIO_PROVIMENTO AS "Data Exercício", ';
         $sql .= '    C.DS_CARGO_RH             AS "Descrição do Cargo", ';
-        $sql .= '    VW_DF.COD_MATRICULA_SIAPE AS "Matrícula SIAPE",';
+        $sql .= '    VW_DF.COD_MATRICULA_SIAPE AS "Matrícula SIAPE", ';
         $sql .= '    VW_DF.NOME_SERVIDOR       AS "Nome do Servidor", ';
         $sql .= '    TP.DS_TIPO_PROVIMENTO     AS "Provimento - Descrição Tipo", ';
         $sql .= '    CGO.NR_ANO_CONCURSO       AS "Ano Concurso" ';
@@ -172,7 +172,7 @@ class Pessoa extends Base
         $sql .= '    END                       AS "Status Servidor", ';
         $sql .= '    DF.CD_MATRICULA_SIAPE     AS "Matrícula SIAPE", ';
         $sql .= '    TDOC.DS_TIPO_DOCUMENTACAO AS "Tipo Doc. - Descr", ';
-        $sql .= '    DOC.NR_DOCUMENTACAO       AS "Nº Documento",';
+        $sql .= '    DOC.NR_DOCUMENTACAO       AS "Nº Documento", ';
         $sql .= '    REQ.DT_INICIO_REQUISICAO  AS "Data Início Requisição", ';
         $sql .= '    REQ.DT_FIM_REQUISICAO     AS "Data Fim Requisição", ';
         $sql .= '    ORGORIG.DS_ORGAO          AS "Órgão Origem - Descrição", ';
@@ -233,7 +233,7 @@ class Pessoa extends Base
         $sql .= 'SELECT ';
         $sql .= '    C.DS_CARGO_RH             AS "Descricao do Cargo", ';
         $sql .= '    VW_DF.COD_MATRICULA_SIAPE AS "Matrícula SIAPE", ';
-        $sql .= '    VW_DF.NOME_SERVIDOR       AS "Nome do Servidor",';
+        $sql .= '    VW_DF.NOME_SERVIDOR       AS "Nome do Servidor", ';
         $sql .= '    V.DT_VACANCIA             AS "Vacancia - Data", ';
         $sql .= '    TV.DS_TIPO_VACANCIA       AS "Vacancia - Tipo", ';
         $sql .= '    CGO.NR_ANO_CONCURSO       AS "Ano Concurso" ';
