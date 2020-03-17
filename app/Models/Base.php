@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use DB;
-use Yajra\Oci8\Oci8Connection;
 use Illuminate\Database\Eloquent\Model;
+use Yajra\Oci8\Oci8Connection;
 
 class Base extends Model
 {
@@ -16,8 +16,9 @@ class Base extends Model
      * @param string $procedure
      * @param array $params
      * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
      */
-    protected function retornaDadosPorCursorDeProcedure($package = '', $procedure = '', $params = [])
+    public function retornaDadosPorCursorDeProcedure($package = '', $procedure = '', $params = [])
     {
         $result = '';
         $packageProcedure = $this->retornaPackageProcedure($package, $procedure);
@@ -38,19 +39,49 @@ class Base extends Model
      * @param string $package
      * @param string $procedure
      * @return string
+     * @author Anderson Sathler <asathler@gmail.com>
      */
-    protected function retornaPackageProcedure($package = '', $procedure = '')
+    public function retornaPackageProcedure($package = '', $procedure = '')
     {
         if ($procedure == '') {
             return '';
         }
 
-        $packageProcedure = ' ';
+        $packageProcedure = '';
         $packageProcedure .= ($package != '' ? $package . '.' : '');
         $packageProcedure .= $procedure;
-        $packageProcedure .= ' ';
 
         return $packageProcedure;
+    }
+
+    /**
+     * Converte array recursivamente, formatando string para UTF-8
+     *
+     * @param array $dados
+     * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
+     */
+    public function converteArrayDadosUtf8($dados = [])
+    {
+        if (!is_array($dados)) {
+            return $dados;
+        }
+
+        $dadosUtf8 = [];
+
+        foreach ($dados as $registro => $campos) {
+            if (is_object($campos)) {
+                $campos = (array) $campos;
+            }
+
+            if (is_array($campos)) {
+                foreach ($campos as $chave => $valor) {
+                    $dadosUtf8[$registro][$chave] = mb_convert_encoding($valor, 'UTF-8', 'auto');;
+                }
+            }
+        }
+
+        return $dadosUtf8;
     }
 
 }

@@ -9,42 +9,95 @@ use Illuminate\Http\Request;
 class PessoaController extends Controller
 {
 
-    public function listarForcaTrabalho()
+    public function __construct()
+    {
+        if (!$this->validaParametros()) {
+            die('{"erro":true}');
+        }
+    }
+
+    public function listarForcaTrabalho(Request $request)
     {
         $model = new Pessoa();
         return $model->retornaDadosForcaTrabalho();
     }
 
-    public function listarFuncoes()
+    public function listarFuncoes(Request $request)
     {
         $model = new Pessoa();
         return $model->retornaDadosFuncoes();
     }
 
-    public function listarAntiguidade()
+    public function listarAntiguidade(Request $request)
     {
         $model = new Pessoa();
-        return $model->retornaDadosAntiguidade();
+        $dataBase = $this->retornaDataBase();
+        return $model->retornaDadosAntiguidade($dataBase);
     }
 
     public function listarCessoes()
     {
-        return 'cessoes';
+        $model = new Pessoa();
+        return $model->retornaDadosCessoes();
     }
 
     public function listarProvimentos()
     {
-        return 'provimentos';
+        $model = new Pessoa();
+        return $model->retornaDadosProvimentos();
     }
 
     public function listarRequisicoes()
     {
-        return 'requisicoes';
+        $model = new Pessoa();
+        return $model->retornaDadosRequisicoes();
     }
 
     public function listarVacancias()
     {
-        return 'vacancias';
+        $model = new Pessoa();
+        return $model->retornaDadosVacancias();
+    }
+
+    /**
+     * Valida parâmetros informados na requisição para exibição ou não dos dados
+     *
+     * @param string $dataBase
+     * @return bool
+     * @author Anderson Sathler <asathler@gmail.com>
+     */
+    public function validaParametros()
+    {
+        $validador = $this->getValidationFactory()->make(request()->all(), $this->retornaRegras());
+
+        return !$validador->fails();
+    }
+
+    /**
+     * Retorna array contendo as regras de validação das requisições
+     *
+     * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
+     */
+    public function retornaRegras()
+    {
+        // Token apresenta problemas no get se houver os caracteres [+] ou [/]
+        $tokenEsperado = config('app.key', 'token_nao_informado');
+        $regras['token'] = 'required|in:' . $tokenEsperado;
+
+        $nomeRota = request()->route()->getName();
+        if ($nomeRota == 'antiguidade') {
+            $regras['database'] = 'required|date_format:Ymd';
+        }
+
+        return $regras;
+    }
+
+
+    public function retornaDataBase()
+    {
+        $params = request()->all();
+        return isset($params['database']) ? $params['database'] : '';
     }
 
 }
