@@ -59,6 +59,12 @@ class PessoaController extends Controller
         return $model->retornaDadosVacancias();
     }
 
+    public function buscaServidorTcu($cpf)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaConectaTCU($cpf);
+    }
+
     /**
      * Valida parâmetros informados na requisição para exibição ou não dos dados
      *
@@ -83,11 +89,16 @@ class PessoaController extends Controller
     {
         // Token apresenta problemas no get se houver os caracteres [+] ou [/]
         $tokenEsperado = config('app.key', 'token_nao_informado');
+        $tokenTcu = env('TOKEN_TCU', 'token tcu não encontrado');
         $regras['token'] = 'required|in:' . $tokenEsperado;
 
         $nomeRota = request()->route()->getName();
         if ($nomeRota == 'antiguidade') {
             $regras['database'] = 'required|date_format:Ymd';
+        }
+
+        if ($nomeRota == 'conectatcu') {
+            $regras['token'] = 'required|in:' . $tokenTcu;
         }
 
         return $regras;

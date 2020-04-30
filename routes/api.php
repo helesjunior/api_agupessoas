@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 Route::namespace('Api\v1')->prefix('v1')->group(function() {
     Route::get('servidor/cpf/{cpf}', 'ServidorController@buscaServidorPorCpf');
     Route::get('servidores', 'ServidorController@buscaTodosServidores');
+    Route::get('conectatcu/cpf/{cpf}', 'PessoaController@buscaServidorTcu')->name('conectatcu');
 //    Route::get('/empenho/ano/{ano}/ug/{ug}/', 'EmpenhoController@buscaEmpenhoPorAnoUg');
 //    Route::get('/empenhodetalhado/{dado}', 'EmpenhodetalhadoController@buscaEmpenhodetalhadoPorNumeroEmpenho');
 //    Route::get('/ordembancaria/favorecido/{dado}', 'OrdembancariaController@buscaOrdembancariaPorCnpj');

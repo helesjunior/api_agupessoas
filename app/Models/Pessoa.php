@@ -264,4 +264,76 @@ class Pessoa extends Base
         return DB::select($sql);
     }
 
+    /**
+     * Retorna Listagem contendo dados para o ConsctaTCU
+     *
+     * @return array
+     * @author Ramon Ladeia <ramon.ladeia@agu.gov.br>
+     */
+    public function retornaConectaTCU($cpf)
+    {
+
+        $sql = '';
+        $sql .= 'SELECT ';
+        $sql .= '    SER.NM_SERVIDOR        AS "NOME DO SERVIDOR", ';
+        $sql .= '    DOC.NR_DOCUMENTACAO    AS CPF, ';
+        $sql .= '    DFU.CD_MATRICULA_SIAPE AS MATRICULA_SIAPE, ';
+        $sql .= '    CASE ';
+        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('410001', '410004', 'R410004' , '414001', '414017', 'R414017') ";
+        $sql .= "        THEN 'ADVOGADO DA UNIÃO' ";
+        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('408001', '408002', 'R408001', 'R408002') ";
+        $sql .= "        THEN 'PROCURADOR FEDERAL' ";
+        $sql .= "        ELSE 'SERVIDOR' ";
+        $sql .= '    END                    AS CARREIRA, ';
+        $sql .= '    CAR.CD_CARGO_RH        AS "CÓDIGO DO CARGO", ';
+        $sql .= '    CAR.DS_CARGO_RH        AS "CARGO DO SERVIDOR", ';
+        $sql .= '    CASE SER.IN_STATUS_SERVIDOR ';
+        $sql .= "        WHEN '1' THEN 'ATIVO' ";
+        $sql .= "        ELSE 'INATIVO' ";
+        $sql .= '    END                    AS STATUS, ';
+        $sql .= '    SYSDATE                AS "CONSULTADO EM" ';
+        $sql .= 'FROM ';
+        $sql .= '    SERVIDOR SER ';
+        $sql .= 'INNER JOIN ';
+        $sql .= '    AGU_RH.DOCUMENTACAO DOC ON ';
+        $sql .= '        DOC.ID_SERVIDOR = SER.ID_SERVIDOR ';
+        $sql .= '        AND DOC.ID_TIPO_DOCUMENTACAO = 1 ';
+        $sql .= '        AND DOC.DT_OPERACAO_EXCLUSAO IS NULL ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    AGU_RH.DADO_FUNCIONAL DFU ON ';
+        $sql .= '        DFU.ID_SERVIDOR = SER.ID_SERVIDOR ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    AGU_RH.CARGO_EFETIVO CEF ON ';
+        $sql .= '        CEF.ID_SERVIDOR = SER.ID_SERVIDOR ';
+        $sql .= '        AND CEF.DT_OPERACAO_EXCLUSAO IS NULL ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    AGU_RH.CARGO CAR ON ';
+        $sql .= '        CAR.ID_CARGO = CEF.ID_CARGO ';
+        $sql .= 'WHERE ';
+        $sql .= '    DOC.NR_DOCUMENTACAO = :cpf ';
+        $sql .= '    AND CAR.CD_CARGO_RH IN (';
+        $sql .= "        '410001', ";
+        $sql .= "        '410004', ";
+        $sql .= "        'R410004',  ";
+        $sql .= "        '414001', ";
+        $sql .= "        '414017', ";
+        $sql .= "        'R414017', ";
+        $sql .= "        '408001', ";
+        $sql .= "        '408002', ";
+        $sql .= "        'R408001', ";
+        $sql .= "        'R408002' ";
+        $sql .= '    ) ';
+        $sql .= 'GROUP BY ';
+        $sql .= '    SER.NM_SERVIDOR, ';
+        $sql .= '    DOC.NR_DOCUMENTACAO, ';
+        $sql .= '    DFU.CD_MATRICULA_SIAPE, ';
+        $sql .= '    CAR.CD_CARGO_RH, ';
+        $sql .= '    CAR.DS_CARGO_RH, ';
+        $sql .= '    SER.IN_STATUS_SERVIDOR ';
+        $sql .= 'ORDER BY ';
+        $sql .= '    SER.NM_SERVIDOR ASC ';
+
+        return DB::select($sql, ['cpf' => $cpf]);
+    }
+
 }
