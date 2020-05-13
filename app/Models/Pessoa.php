@@ -336,4 +336,24 @@ class Pessoa extends Base
         return DB::select($sql, ['cpf' => $cpf]);
     }
 
+    /**
+     * Retorna listagem contendo os dados do Controle de Estrutura
+     *
+     * @param string $dataBase
+     * @return array
+     * @author Ramon Ladeia <ramon.ladeia@agu.gov.br.com>
+     */
+    public function retornaDadosEstrutura($dataBase = '')
+    {
+        $data = Carbon::createFromFormat('Ymd H:i:s', $dataBase . ' 00:00:00');
+
+        $procedure = 'PR_REL_CONTROLE_ESTRUTURA';
+        $parametros['P_ID_CARGO_FUNCAO'] = 1;
+        $parametros['P_DT_DATA_BASE'] = $data->format('d/m/Y');
+        $parametros['P_ID_RH'] = 1;
+        $parametros['P_COD_ERRO'] = '';
+
+        return $this->retornaDadosPorCursorDeProcedure($this->package, $procedure, $parametros);
+    }
+
 }
