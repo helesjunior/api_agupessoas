@@ -339,16 +339,17 @@ class Pessoa extends Base
     /**
      * Retorna listagem contendo os dados do Controle de Estrutura
      *
+     * @param int $funcao
      * @param string $dataBase
      * @return array
      * @author Ramon Ladeia <ramon.ladeia@agu.gov.br.com>
      */
-    public function retornaDadosEstrutura($dataBase = '')
+    public function retornaDadosEstrutura($funcao = 0, $dataBase = '')
     {
         $data = Carbon::createFromFormat('Ymd H:i:s', $dataBase . ' 00:00:00');
 
         $procedure = 'PR_REL_CONTROLE_ESTRUTURA';
-        $parametros['P_ID_CARGO_FUNCAO'] = 1;
+        $parametros['P_ID_CARGO_FUNCAO'] = $funcao;
         $parametros['P_DT_DATA_BASE'] = $data->format('d/m/Y');
         $parametros['P_ID_RH'] = 1;
         $parametros['P_COD_ERRO'] = '';
