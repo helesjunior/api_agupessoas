@@ -357,7 +357,7 @@ class Pessoa extends Base
         $sql .= 'WHERE ';
         $sql .= '    ID_RH = 1 ';
         $sql .= '    AND ID_CARGO_FUNCAO = :cargo ';
-        $sql .= "    AND DATA_EXERCICIO = 1 <= TO_DATE(:dataExercicio, 'DD/MM/YYYY') ";
+        $sql .= "    AND DATA_EXERCICIO <= TO_DATE(:dataExercicio, 'DD/MM/YYYY') ";
         $sql .= "    AND NVL(DATA_EXONERACAO, SYSDATE) >= TO_DATE(:dataExoneracao, 'DD/MM/YYYY') ";
 
         /*
