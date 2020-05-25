@@ -346,6 +346,21 @@ class Pessoa extends Base
      */
     public function retornaDadosEstrutura($funcao = 0, $dataBase = '')
     {
+        $dataFormatada = Carbon::createFromFormat('Ymd H:i:s', $dataBase . ' 00:00:00');
+        $data = $dataFormatada->format('d/m/Y');
+
+        $sql = '';
+        $sql .= 'SELECT ';
+        $sql .= '    * ';
+        $sql .= 'FROM ';
+        $sql .= '    AGU_RH.VW_REL_FUNCAO_COMISSIONADA ';
+        $sql .= 'WHERE ';
+        $sql .= '    ID_RH = 1 ';
+        $sql .= '    AND ID_CARGO_FUNCAO = :cargo ';
+        $sql .= "    AND DATA_EXERCICIO = 1 <= TO_DATE(:dataExercicio, 'DD/MM/YYYY') ";
+        $sql .= "    AND NVL(DATA_EXONERACAO, SYSDATE) >= TO_DATE(:dataExoneracao, 'DD/MM/YYYY') ";
+
+        /*
         $data = Carbon::createFromFormat('Ymd H:i:s', $dataBase . ' 00:00:00');
 
         $procedure = 'PR_REL_CONTROLE_ESTRUTURA';
@@ -355,6 +370,13 @@ class Pessoa extends Base
         $parametros['P_COD_ERRO'] = '';
 
         return $this->retornaDadosPorCursorDeProcedure($this->package, $procedure, $parametros);
+        */
+
+        return DB::select($sql, [
+            'cargo' => $funcao,
+            'dataExercicio' => $data,
+            'dataExoneracao' => $data
+        ]);
     }
 
 }
