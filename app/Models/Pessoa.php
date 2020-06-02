@@ -265,7 +265,7 @@ class Pessoa extends Base
     }
 
     /**
-     * Retorna Listagem contendo dados para o ConsctaTCU
+     * Retorna Listagem contendo dados para o ConectaTCU
      *
      * @return array
      * @author Ramon Ladeia <ramon.ladeia@agu.gov.br>
@@ -334,6 +334,99 @@ class Pessoa extends Base
         $sql .= '    SER.NM_SERVIDOR ASC ';
 
         return DB::select($sql, ['cpf' => $cpf]);
+    }
+
+    /**
+     * Retorna listagem contendo os dados do Controle de Estrutura
+     *
+     * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
+     * @author Ramon Ladeia <ramon.ladeia@agu.gov.br.com>
+     */
+    public function retornaDadosEstrutura()
+    {
+        $sql = '';
+        $sql .= 'SELECT ';
+        $sql .= '    CASE ';
+        $sql .= '        WHEN ';
+        $sql .= '            CF.DS_CARGO_FUNCAO IS NULL ';
+        $sql .= '        THEN ';
+        $sql .= '            CF.CD_CARGO_FUNCAO ';
+        $sql .= '        ELSE ';
+        $sql .= '            CF.CD_CARGO_FUNCAO                    || ';
+        $sql .= "            ' - '                                 || ";
+        $sql .= '            CF.DS_CARGO_FUNCAO ';
+        $sql .= '    END                                           AS CARGO, ';
+        $sql .= '    FG.CD_FUNCAO_GRATIFICADA                      AS FUNCAO, ';
+        $sql .= '    SV.NM_SERVIDOR                                || ';
+        $sql .= "    ' ('                                          || ";
+        $sql .= '    SV.CD_SERVIDOR                                || ';
+        $sql .= "    ')'                                           AS OCUPANTE, ";
+        $sql .= '    FD.DS_FORMA_DOCUMENTO                         || ';
+        $sql .= "    ' '                                           || ";
+        $sql .= '    NR.NR_DOCUMENTO_NORMA                         || ';
+        $sql .= "    ' de '                                        || ";
+        $sql .= "    TO_CHAR(NR.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY')  || ";
+        $sql .= "    '. '                                          || ";
+        $sql .= '    TP.DS_TIPO_PUBLICACAO                         || ';
+        $sql .= "    ' Nº '                                        || ";
+        $sql .= '    NR.NR_PUBLICACAO_NORMA                        || ';
+        $sql .= "    ' de '                                        || ";
+        $sql .= "    TO_CHAR(NR.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') || ";
+        $sql .= "    '.'                                           AS ATO, ";
+        $sql .= '    FC.DT_POSSE                                   AS POSSE, ';
+        $sql .= '    FC.DT_EXERCICIO                               AS EXERCICIO, ';
+        $sql .= '    LT.SG_ORGAO                                   AS ORIGEM ';
+        $sql .= 'FROM ';
+        $sql .= '    FUNCAO_COMISSIONADA FC ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    SERVIDOR SV ON ';
+        $sql .= '        SV.ID_SERVIDOR = FC.ID_SERVIDOR ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    CARGO_FUNCAO CF ON ';
+        $sql .= '        CF.ID_CARGO_FUNCAO = FC.ID_CARGO_FUNCAO  ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    FUNCAO_GRATIFICADA FG ON ';
+        $sql .= '        FG.ID_FUNCAO_GRATIFICADA = CF.ID_FUNCAO_GRATIFICADA ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    NORMA NR ON ';
+        $sql .= '        NR.ID_NORMA = FC.ID_NORMA_NOMEACAO ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    BASE_LEGAL BL ON ';
+        $sql .= '        BL.ID_BASE_LEGAL = NR.ID_BASE_LEGAL ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    FORMA_DOCUMENTO FD ON ';
+        $sql .= '        FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    TIPO_PUBLICACAO TP ON ';
+        $sql .= '        TP.ID_TIPO_PUBLICACAO = NR.ID_TIPO_PUBLICACAO ';
+        $sql .= 'LEFT JOIN ';
+        $sql .= '    ( ';
+        $sql .= '    SELECT ';
+        $sql .= '        U.ID_SERVIDOR, ';
+        $sql .= '        O.SG_ORGAO ';
+        $sql .= '    FROM ';
+        $sql .= '        ( ';
+        $sql .= '        SELECT ';
+        $sql .= '            MAX(ID_MOVIMENTACAO) ULTIMA, ';
+        $sql .= '            ID_SERVIDOR ';
+        $sql .= '        FROM ';
+        $sql .= '            MOVIMENTACAO ';
+        $sql .= '        GROUP BY ';
+        $sql .= '            ID_SERVIDOR ';
+        $sql .= '        ) U ';
+        $sql .= '    LEFT JOIN ';
+        $sql .= '        MOVIMENTACAO N ON ';
+        $sql .= '            N.ID_MOVIMENTACAO = U.ULTIMA ';
+        $sql .= '    LEFT JOIN ';
+        $sql .= '        ORGAO O ON ';
+        $sql .= '            O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO ';
+        $sql .= '        ) LT ON ';
+        $sql .= '            LT.ID_SERVIDOR = SV.ID_SERVIDOR  ';
+        $sql .= 'ORDER BY ';
+        $sql .= '    SV.NM_SERVIDOR ';
+
+        return DB::select($sql);
     }
 
 }

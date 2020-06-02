@@ -32,7 +32,15 @@ class PessoaController extends Controller
     {
         $model = new Pessoa();
         $dataBase = $this->retornaDataBase();
+
         return $model->retornaDadosAntiguidade($dataBase);
+    }
+
+    // Retorna dados do Controle de Estruturas
+    public function listarEstrutura()
+    {
+        $model = new Pessoa();
+        return $model->retornaDadosEstrutura();
     }
 
     public function listarCessoes()
@@ -104,11 +112,22 @@ class PessoaController extends Controller
         return $regras;
     }
 
+    public function retornaFuncao()
+    {
+        return $this->retornaParametro('funcao', 0);
+    }
 
     public function retornaDataBase()
     {
-        $params = request()->all();
-        return isset($params['database']) ? $params['database'] : '';
+        return $this->retornaParametro('database');
     }
+
+    public function retornaParametro($parametro, $default = '')
+    {
+        $params = request()->all();
+        return isset($params[$parametro]) ? $params[$parametro] : $default;
+    }
+
+
 
 }
