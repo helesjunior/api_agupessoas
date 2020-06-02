@@ -37,13 +37,10 @@ class PessoaController extends Controller
     }
 
     // Retorna dados do Controle de Estruturas
-    public function listarEstrutura(Request $request)
+    public function listarEstrutura()
     {
         $model = new Pessoa();
-        $funcao = $this->retornaFuncao();
-        $dataBase = $this->retornaDataBase();
-
-        return $model->retornaDadosEstrutura($funcao, $dataBase);
+        return $model->retornaDadosEstrutura();
     }
 
     public function listarCessoes()
