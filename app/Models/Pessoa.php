@@ -423,7 +423,6 @@ class Pessoa extends Base
         $sql .= '            O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO ';
         $sql .= '        ) LT ON ';
         $sql .= '            LT.ID_SERVIDOR = SV.ID_SERVIDOR  ';
-        $sql .= 'WHERE ';
         $sql .= 'ORDER BY ';
         $sql .= '    SV.NM_SERVIDOR ';
 
