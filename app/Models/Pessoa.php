@@ -268,6 +268,7 @@ class Pessoa extends Base
      * Retorna Listagem contendo dados para o ConectaTCU
      *
      * @return array
+     * @author Anderson Sathler <asathler@gmail.com>
      * @author Ramon Ladeia <ramon.ladeia@agu.gov.br>
      */
     public function retornaConectaTCU($cpf)
@@ -279,9 +280,9 @@ class Pessoa extends Base
         $sql .= '    DOC.NR_DOCUMENTACAO    AS CPF, ';
         $sql .= '    DFU.CD_MATRICULA_SIAPE AS MATRICULA_SIAPE, ';
         $sql .= '    CASE ';
-        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('410001', '410004', 'R410004' , '414001', '414017', 'R414017') ";
+        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('410001', '410002', 'R410002', '600001', '600002', 'R991067', 'R222003', '001075', '414017', 'R414017') ";
         $sql .= "        THEN 'ADVOGADO DA UNIÃO' ";
-        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('408001', '408002', 'R408001', 'R408002') ";
+        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('R301001', '408002', 'R408002', 'R408001', '408001') ";
         $sql .= "        THEN 'PROCURADOR FEDERAL' ";
         $sql .= "        ELSE 'SERVIDOR' ";
         $sql .= '    END                    AS CARREIRA, ';
@@ -341,7 +342,7 @@ class Pessoa extends Base
      *
      * @return array
      * @author Anderson Sathler <asathler@gmail.com>
-     * @author Ramon Ladeia <ramon.ladeia@agu.gov.br.com>
+     * @author Ramon Ladeia <ramon.ladeia@agu.gov.br>
      */
     public function retornaDadosEstrutura()
     {
