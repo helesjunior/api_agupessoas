@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 
 // API Consulta Banco de Dados
 Route::namespace('Api\v1')->prefix('v1')->group(function() {
+
+
     Route::get('servidor/cpf/{cpf}', 'ServidorController@buscaServidorPorCpf');
     Route::get('servidores', 'ServidorController@buscaTodosServidores');
     Route::get('conectatcu/cpf/{cpf}', 'PessoaController@buscaServidorTcu')->name('conectatcu');
@@ -27,10 +29,11 @@ Route::namespace('Api\v1')->prefix('v1')->group(function() {
 
 // Route::namespace('Api\v1')->prefix('v1/pessoas')->middleware('auth:api')->group(function() {
 Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
+
     Route::get('forca-trabalho', 'PessoaController@listarForcaTrabalho');
     Route::get('funcoes', 'PessoaController@listarFuncoes');
     Route::get('antiguidade', 'PessoaController@listarAntiguidade')->name('antiguidade');
-    
+
     //Rota do Controle de Estruturas
     Route::get('estrutura', 'PessoaController@listarEstrutura')->name('estrutura');
 

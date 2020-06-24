@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pessoa;
+use App\Models\Servidor;
+use App\Models\TipoServidor;
 use Illuminate\Http\Request;
 
 class PessoaController extends Controller
@@ -11,10 +13,11 @@ class PessoaController extends Controller
 
     public function __construct()
     {
-        if (!$this->validaParametros()) {
-            die('{"erro":true}');
-        }
+//        if (!$this->validaParametros()) {
+//            die('{"erro":true}');
+//        }
     }
+
 
     public function listarForcaTrabalho(Request $request)
     {
@@ -70,7 +73,11 @@ class PessoaController extends Controller
     public function buscaServidorTcu($cpf)
     {
         $modelo = new Pessoa();
-        return $modelo->retornaConectaTCU($cpf);
+         return json_encode($modelo->retornaConectaTCU($cpf));
+
+
+
+
     }
 
     /**
