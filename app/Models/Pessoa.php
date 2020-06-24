@@ -269,71 +269,42 @@ class Pessoa extends Base
      *
      * @return array
      * @author Ramon Ladeia <ramon.ladeia@agu.gov.br>
+     * @author Celso da silva couto junior <celso.couto@agu.gov.br>
      */
+
     public function retornaConectaTCU($cpf)
     {
+       $result =  DB::table('SERVIDOR')
+            ->join('DOCUMENTACAO', 'DOCUMENTACAO.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
+            ->leftJoin('DADO_FUNCIONAL', 'DADO_FUNCIONAL.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
+            ->leftJoin('cargo_efetivo', 'cargo_efetivo.id_servidor', '=', 'servidor.id_servidor')
+            ->leftJoin('cargo', 'cargo.id_cargo', '=', 'cargo_efetivo.id_cargo')
+            ->select('SERVIDOR.NM_SERVIDOR as nome do servidor',
+                'DOCUMENTACAO.NR_DOCUMENTACAO as cpf',
+                DB::raw( "CASE
+                            WHEN cargo.cd_cargo_rh IN ('410001','410004','R410004','414001','414017','R414017')
+                                THEN 'ADVOGADO DA UNIÃO'
+                            WHEN cargo.CD_CARGO_RH IN ('408001','408002','R408001','R408002')
+                                THEN 'PROCURADOR FEDERAL'
+                            ELSE 'SERVIDOR'
+                          END  AS CARREIRA"),
+                DB::raw( "CASE
+                            WHEN  servidor.in_status_servidor ='1' THEN 'ATIVO'
+                            ELSE 'INATIVO'
+                          END  AS STATUS"),
 
-        $sql = '';
-        $sql .= 'SELECT ';
-        $sql .= '    SER.NM_SERVIDOR        AS "NOME DO SERVIDOR", ';
-        $sql .= '    DOC.NR_DOCUMENTACAO    AS CPF, ';
-        $sql .= '    DFU.CD_MATRICULA_SIAPE AS MATRICULA_SIAPE, ';
-        $sql .= '    CASE ';
-        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('410001', '410004', 'R410004' , '414001', '414017', 'R414017') ";
-        $sql .= "        THEN 'ADVOGADO DA UNIÃO' ";
-        $sql .= "        WHEN CAR.CD_CARGO_RH IN ('408001', '408002', 'R408001', 'R408002') ";
-        $sql .= "        THEN 'PROCURADOR FEDERAL' ";
-        $sql .= "        ELSE 'SERVIDOR' ";
-        $sql .= '    END                    AS CARREIRA, ';
-        $sql .= '    CAR.CD_CARGO_RH        AS "CÓDIGO DO CARGO", ';
-        $sql .= '    CAR.DS_CARGO_RH        AS "CARGO DO SERVIDOR", ';
-        $sql .= '    CASE SER.IN_STATUS_SERVIDOR ';
-        $sql .= "        WHEN '1' THEN 'ATIVO' ";
-        $sql .= "        ELSE 'INATIVO' ";
-        $sql .= '    END                    AS STATUS, ';
-        $sql .= '    SYSDATE                AS "CONSULTADO EM" ';
-        $sql .= 'FROM ';
-        $sql .= '    SERVIDOR SER ';
-        $sql .= 'INNER JOIN ';
-        $sql .= '    AGU_RH.DOCUMENTACAO DOC ON ';
-        $sql .= '        DOC.ID_SERVIDOR = SER.ID_SERVIDOR ';
-        $sql .= '        AND DOC.ID_TIPO_DOCUMENTACAO = 1 ';
-        $sql .= '        AND DOC.DT_OPERACAO_EXCLUSAO IS NULL ';
-        $sql .= 'LEFT JOIN ';
-        $sql .= '    AGU_RH.DADO_FUNCIONAL DFU ON ';
-        $sql .= '        DFU.ID_SERVIDOR = SER.ID_SERVIDOR ';
-        $sql .= 'LEFT JOIN ';
-        $sql .= '    AGU_RH.CARGO_EFETIVO CEF ON ';
-        $sql .= '        CEF.ID_SERVIDOR = SER.ID_SERVIDOR ';
-        $sql .= '        AND CEF.DT_OPERACAO_EXCLUSAO IS NULL ';
-        $sql .= 'LEFT JOIN ';
-        $sql .= '    AGU_RH.CARGO CAR ON ';
-        $sql .= '        CAR.ID_CARGO = CEF.ID_CARGO ';
-        $sql .= 'WHERE ';
-        $sql .= '    DOC.NR_DOCUMENTACAO = :cpf ';
-        $sql .= '    AND CAR.CD_CARGO_RH IN (';
-        $sql .= "        '410001', ";
-        $sql .= "        '410004', ";
-        $sql .= "        'R410004',  ";
-        $sql .= "        '414001', ";
-        $sql .= "        '414017', ";
-        $sql .= "        'R414017', ";
-        $sql .= "        '408001', ";
-        $sql .= "        '408002', ";
-        $sql .= "        'R408001', ";
-        $sql .= "        'R408002' ";
-        $sql .= '    ) ';
-        $sql .= 'GROUP BY ';
-        $sql .= '    SER.NM_SERVIDOR, ';
-        $sql .= '    DOC.NR_DOCUMENTACAO, ';
-        $sql .= '    DFU.CD_MATRICULA_SIAPE, ';
-        $sql .= '    CAR.CD_CARGO_RH, ';
-        $sql .= '    CAR.DS_CARGO_RH, ';
-        $sql .= '    SER.IN_STATUS_SERVIDOR ';
-        $sql .= 'ORDER BY ';
-        $sql .= '    SER.NM_SERVIDOR ASC ';
+                'DADO_FUNCIONAL.CD_MATRICULA_SIAPE as matricula_siape',
+                'cargo.cd_cargo_rh as codigo do cargo',
+                'cargo.ds_cargo_rh as nome do cargo',
+                 DB::raw('SYSDATE as consultado em')
 
-        return DB::select($sql, ['cpf' => $cpf]);
+            )
+            ->where('DOCUMENTACAO.NR_DOCUMENTACAO',$cpf)
+           ->whereIn('CD_CARGO_RH', [410001,410004,'R410004',414001,414017,'R414017',408001,408002,'R408001','R408002'])
+            ->first();
+
+        return $result;
+
     }
 
     /**
