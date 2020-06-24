@@ -295,7 +295,8 @@ class Pessoa extends Base
 
                 'DADO_FUNCIONAL.CD_MATRICULA_SIAPE as matricula_siape',
                 'cargo.cd_cargo_rh as codigo do cargo',
-                'cargo.ds_cargo_rh as nome do cargo'
+                'cargo.ds_cargo_rh as nome do cargo',
+                 DB::raw('SYSDATE as consultado_em')
             )
             ->where('DOCUMENTACAO.NR_DOCUMENTACAO',$cpf)
            ->whereIn('CD_CARGO_RH', [410001,410004,'R410004',414001,414017,'R414017',408001,408002,'R408001','R408002'])
