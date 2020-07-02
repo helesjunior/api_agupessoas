@@ -21,6 +21,7 @@ Route::namespace('Api\v1')->prefix('v1')->group(function() {
     Route::get('servidores', 'ServidorController@buscaTodosServidores');
     Route::get('conectatcu/cpf/{cpf}', 'PessoaController@buscaServidorTcu')->name('conectatcu');
 
+
     //feature-13
     Route::get('afastamento-servidor/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoServidor')->name('afastamento-servidor');
     Route::get('afastamento-unidade/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoUnidade')->name('afastamento-unidade');
