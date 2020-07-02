@@ -74,11 +74,20 @@ class PessoaController extends Controller
     {
         $modelo = new Pessoa();
          return json_encode($modelo->retornaConectaTCU($cpf));
-
-
-
-
     }
+
+    public function buscaAfastamentoServidor($tpDocumento, $dtInicio)
+    {
+        $modelo = new Pessoa();
+        return json_encode($modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio));
+    }
+
+    public function buscaAfastamentoUnidade($tpDocumento, $dtInicio)
+    {
+        $modelo = new Pessoa();
+        return json_encode($modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio));
+    }
+
 
     /**
      * Valida parâmetros informados na requisição para exibição ou não dos dados

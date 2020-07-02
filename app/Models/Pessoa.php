@@ -307,6 +307,152 @@ class Pessoa extends Base
     }
 
     /**
+     * Retorna Listagem contendo dados para o afastamento por servidor
+     * @feature 13
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+
+    public function retornaAfastamentoServidor($tpDocumento, $dtInicio)
+    {
+
+        if(!is_numeric($tpDocumento)) {
+            return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+            Carbon::parse($dtInicio)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return ['error', 'Formato inválido para data início, formato aceito (d/m/Y ex: 01/01/2020), por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+
+            $sql = DB::select('
+            SELECT
+               "NOME DO SERVIDOR"
+               ,CARGO
+               ,CPF
+               ,SIAPE
+               ,"UNIDADE DE EXERCICIO"
+               ,"CODIGO DO AFASTAMENTO"
+               ,"DESCRICAO TIPO AFASTAMENTO"
+               ,"DESCRICAO CID (TIPO DE DOENCA)"
+               ,"DATA DE INICIO DO AFASTAMENTO"
+               ,"DATA FINAL DO AFASTAMENTO"
+               ,DT_MOV
+               ,DT_INICIO_MOVIMENTACAO
+            from
+                (SELECT
+                    SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
+                    CA.DS_CARGO_RH  AS CARGO,
+                    DOC.NR_DOCUMENTACAO AS CPF,
+                    DF.CD_MATRICULA_SIAPE AS SIAPE,
+                    LOT1.DS_LOTACAO AS "UNIDADE DE EXERCICIO",
+                    TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
+                    TA.DS_TIPO_AFASTAMENTO AS "DESCRICAO TIPO AFASTAMENTO",
+                    A.DS_CID_AFASTAMENTO AS "DESCRICAO CID (TIPO DE DOENCA)",
+                    A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
+                    A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO"
+                    ,MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                    ,MOV.DT_INICIO_MOVIMENTACAO
+
+                FROM
+                    AGU_RH.SERVIDOR SER
+                    JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                    JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                    JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
+                    LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                    LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                    LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                    JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                    INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+
+                WHERE
+                    DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\')
+                    AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                ORDER
+                    BY NM_SERVIDOR ASC
+                    , DT_INICIO_AFASTAMENTO ASC) s
+            where
+                s.DT_MOV = s.DT_INICIO_MOVIMENTACAO', [$tpDocumento, $dtInicio]);
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o afastamento por unidade
+     * @feature 13
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+
+    public function retornaAfastamentoUnidade($tpDocumento, $dtInicio)
+    {
+
+        if(!is_numeric($tpDocumento)) {
+            return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+            Carbon::parse($dtInicio)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return ['error', 'Formato inválido para data início, formato aceito (d/m/Y ex: 01/01/2020), por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+
+            $sql = DB::select('
+            SELECT
+                 "UNIDADE DE EXERCICIO"
+                 ,"DESCRICAO TIPO AFASTAMENTO"
+                 ,"DESCRICAO CID (TIPO DE DOENCA)"
+                 ,"DATA DE INICIO DO AFASTAMENTO"
+                 ,"DATA FINAL DO AFASTAMENTO"
+            FROM
+                (SELECT
+                     SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
+                     CA.DS_CARGO_RH  AS CARGO,
+                     DOC.NR_DOCUMENTACAO AS CPF,
+                     DF.CD_MATRICULA_SIAPE AS SIAPE,
+                     LOT1.DS_LOTACAO AS "UNIDADE DE EXERCICIO",
+                     TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
+                     TA.DS_TIPO_AFASTAMENTO AS "DESCRICAO TIPO AFASTAMENTO",
+                     A.DS_CID_AFASTAMENTO AS "DESCRICAO CID (TIPO DE DOENCA)",
+                     A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
+                     A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO"
+                         ,MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                         ,MOV.DT_INICIO_MOVIMENTACAO
+                FROM
+                     AGU_RH.SERVIDOR SER
+                         JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                         JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                         JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
+                         LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                         JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                         INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                WHERE
+                         DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\') AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                ORDER
+                     BY NM_SERVIDOR ASC
+                      , DT_INICIO_AFASTAMENTO ASC) s
+            where
+                    s.DT_MOV = s.DT_INICIO_MOVIMENTACAO', [$tpDocumento, $dtInicio]);
+
+            return $sql;
+
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+
+    }
+
+    /**
      * Retorna listagem contendo os dados do Controle de Estrutura
      *
      * @return array
