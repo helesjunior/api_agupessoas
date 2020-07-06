@@ -79,13 +79,19 @@ class PessoaController extends Controller
     public function buscaAfastamentoServidor($tpDocumento, $dtInicio)
     {
         $modelo = new Pessoa();
-        return json_encode($modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio));
+        return $modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio);
     }
 
     public function buscaAfastamentoUnidade($tpDocumento, $dtInicio)
     {
         $modelo = new Pessoa();
-        return json_encode($modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio));
+        return $modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio);
+    }
+
+    public function buscaMovimentacao()
+    {
+        $modelo = new Pessoa();
+        return json_encode($modelo->retornaMovimentacao());
     }
 
 
