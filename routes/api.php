@@ -29,7 +29,7 @@ Route::namespace('Api\v1')->prefix('v1')->group(function () {
 });
 
 // Route::namespace('Api\v1')->prefix('v1/pessoas')->middleware('auth:api')->group(function() {
-Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
+Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
 
     Route::get('forca-trabalho', 'PessoaController@listarForcaTrabalho');
     Route::get('funcoes', 'PessoaController@listarFuncoes');
@@ -48,8 +48,30 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
     Route::get('afastamento-unidade/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoUnidade')->name('afastamento-unidade');
 
     //feature-14
-    Route::get('movimentacao/{cpf}/{descricao_lot_exer}/descricao_lot_origem/{descricao_movimentacao}/{dt_inicial}/{dt_final}/{descricao_municipio_lot_exer/{sigla_uf_lot_exer}/{nome_servidor}', 'PessoaController@buscaMovimentacao')->name('movimentacao');
+    Route::get('movimentacao', 'PessoaController@buscaMovimentacao')->name('movimentacao');
 
+
+    /*
+    /{cpf}/{descricao_lot_exer}/descricao_lot_origem/{descricao_movimentacao}/{dt_inicial}/{dt_final}/{descricao_municipio_lot_exer/{sigla_uf_lot_exer}/{nome_servidor}
+    --CPF (vai vir da tb servidor)  |
+     descricao_lot_exer string tabela lotacao
+    descricao_lot_origem string
+    descricao_movimentacao string
+    dt_inicial string
+    dt_final string
+    --dt_ingresso movimentacao novo data ingresso
+    lotação exercício - município| descricao_municipio_lot_exer string
+    lotação exercício - uf| sigla_uf_lot_exer string
+    --cargo efetivo| descricao_lot_exer string situacao atual 00 cadastro servidor cadastro atual
+    nome_servidor| nome_servidor string
+    --situacao_funcional 14 cadastro de servidor|
+
+
+
+    situacao funcional
+
+
+    */
 
 });
 

@@ -274,21 +274,21 @@ class Pessoa extends Base
 
     public function retornaConectaTCU($cpf)
     {
-       $result =  DB::table('SERVIDOR')
+        $result = DB::table('SERVIDOR')
             ->join('DOCUMENTACAO', 'DOCUMENTACAO.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
             ->leftJoin('DADO_FUNCIONAL', 'DADO_FUNCIONAL.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
             ->leftJoin('cargo_efetivo', 'cargo_efetivo.id_servidor', '=', 'servidor.id_servidor')
             ->leftJoin('cargo', 'cargo.id_cargo', '=', 'cargo_efetivo.id_cargo')
             ->select('SERVIDOR.NM_SERVIDOR as nome do servidor',
                 'DOCUMENTACAO.NR_DOCUMENTACAO as cpf',
-                DB::raw( "CASE
+                DB::raw("CASE
                             WHEN cargo.cd_cargo_rh IN ('410001','410004','R410004','414001','414017','R414017')
                                 THEN 'ADVOGADO DA UNIÃO'
                             WHEN cargo.CD_CARGO_RH IN ('408001','408002','R408001','R408002')
                                 THEN 'PROCURADOR FEDERAL'
                             ELSE 'SERVIDOR'
                           END  AS CARREIRA"),
-                DB::raw( "CASE
+                DB::raw("CASE
                             WHEN  servidor.in_status_servidor ='1' THEN 'ATIVO'
                             ELSE 'INATIVO'
                           END  AS STATUS"),
@@ -296,10 +296,10 @@ class Pessoa extends Base
                 'DADO_FUNCIONAL.CD_MATRICULA_SIAPE as matricula_siape',
                 'cargo.cd_cargo_rh as codigo do cargo',
                 'cargo.ds_cargo_rh as nome do cargo',
-                 DB::raw('SYSDATE as consultado_em')
+                DB::raw('SYSDATE as consultado_em')
             )
-            ->where('DOCUMENTACAO.NR_DOCUMENTACAO',$cpf)
-           ->whereIn('CD_CARGO_RH', [410001,410004,'R410004',414001,414017,'R414017',408001,408002,'R408001','R408002'])
+            ->where('DOCUMENTACAO.NR_DOCUMENTACAO', $cpf)
+            ->whereIn('CD_CARGO_RH', [410001, 410004, 'R410004', 414001, 414017, 'R414017', 408001, 408002, 'R408001', 'R408002'])
             ->first();
 
         return $result;
@@ -316,7 +316,7 @@ class Pessoa extends Base
     public function retornaAfastamentoServidor($tpDocumento, $dtInicio)
     {
 
-        if(!is_numeric($tpDocumento)) {
+        if (!is_numeric($tpDocumento)) {
             return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
         }
 
@@ -393,7 +393,7 @@ class Pessoa extends Base
     public function retornaAfastamentoUnidade($tpDocumento, $dtInicio)
     {
 
-        if(!is_numeric($tpDocumento)) {
+        if (!is_numeric($tpDocumento)) {
             return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
         }
 
@@ -446,6 +446,113 @@ class Pessoa extends Base
 
             return $sql;
 
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o afastamento por unidade
+     * @feature 13
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaMovimentacao($request)
+    {
+
+        $where = array();
+        $binds = array();
+        $where[] = "WHERE 1 = 1";
+
+        if ($request->get('cpf')) {
+            $where[] = "AND SER.NR_CPF_OPERADOR = '{$request->get('cpf')}'";
+        }
+
+        if ($request->get('descricaoLotExer')) {
+            $request->offsetSet('descricaoLotOrigem', strtoupper($request->get('descricaoLotExer')));
+            $where[] = "AND LE.DS_LOTACAO LIKE '%{$request->get('descricaoLotExer')}%'";
+        }
+
+        if ($request->get('descricaoLotOrigem')) {
+            $request->offsetSet('descricaoLotOrigem', strtoupper($request->get('descricaoLotOrigem')));
+            $where[] = "AND LO.DS_LOTACAO LIKE '%{$request->get('descricaoLotOrigem')}%' ";
+        }
+
+        if ($request->get('descricaoMovimentacao')) {
+            $request->offsetSet('descricaoMovimentacao', strtoupper($request->get('descricaoMovimentacao')));
+            $where[] = "AND MOV.DESCRICAO_MOVIMENTACAO LIKE '%{$request->get('descricaoMovimentacao')}%'";
+        }
+
+        if ($request->get('dtInicial')) {
+            $where[] = "AND MOV.DATA_INICIO >= TO_DATE('{$request->get('dtInicial')}', 'DD/MM/YY')";
+        }
+
+        if ($request->get('dtFinal')) {
+            $where[] = "AND MOV.DATA_FINAL <= TO_DATE('{$request->get('dtFinal')}', 'DD/MM/YY')";
+        }
+
+        if ($request->get('dtIngresso')) {
+            $where[] = "AND CE1.DT_INGRESSO_SERVIDOR = TO_DATE('{$request->get('dtIngresso')}', 'DD/MM/YY')";
+        }
+
+        if ($request->get('lotacaoExercicioMunicipio')) {
+            $where[] = "AND MOV.DESCRICAO_MUNICIPIO_LOT_EXER = '{$request->get('lotacaoExercicioMunicipio')}'";
+        }
+
+        if ($request->get('lotacaoExercicioUf')) {
+            $request->offsetSet('lotacaoExercicioUf', strtoupper($request->get('lotacaoExercicioUf')));
+            $where[] = "AND MOV.SIGLA_UF_LOT_EXER = '{$request->get('lotacaoExercicioUf')}'";
+        }
+
+        if ($request->get('nomeServidor')) {
+            $request->offsetSet('nomeServidor', strtoupper($request->get('nomeServidor')));
+            $where[] = "AND MOV.NOME_SERVIDOR LIKE '%{$request->get('nomeServidor')}%'";
+        }
+
+        if ($request->get('situacaoFuncional')) {
+            $request->offsetSet('situacaoFuncional', strtoupper($request->get('situacaoFuncional')));
+            $where[] = "AND TS.DS_TIPO_SERVIDOR LIKE '{$request->get('situacaoFuncional')}'";
+        }
+
+        if ($request->get('cargoEfetivo')) {
+            $request->offsetSet('cargoEfetivo', strtoupper($request->get('cargoEfetivo')));
+            $where[] = "AND CA.CARGO_RH LIKE '%{$request->get('cargoEfetivo')}%'";
+        }
+
+        $whereFilter = implode(" ", $where);
+
+        try {
+            $sql = DB::select("with cargo_eftv as (
+            SELECT
+                   CE.ID_CARGO_EFETIVO AS id_cargo_ef,
+                   CGO.DS_CARGO_RH as cargo_rh
+            FROM AGU_RH.CARGO_EFETIVO CE
+                     INNER JOIN AGU_RH.CARGO CGO ON (CE.id_cargo = CGO.ID_CARGO)
+                     INNER JOIN AGU_RH.PROVIMENTO P ON (P.ID_CARGO_EFETIVO = CE.id_cargo_efetivo)
+                     INNER JOIN AGU_RH.CARGO C ON C.ID_CARGO = CE.ID_CARGO
+                     LEFT JOIN AGU_RH.CARREIRA CA ON CA.ID_CARREIRA = C.ID_CARREIRA
+            WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
+              AND C.DT_OPERACAO_EXCLUSAO IS NULL
+              AND P.DT_OPERACAO_EXCLUSAO IS NULL
+         ) SELECT CE1.ID_CARGO_EFETIVO,
+                  SER.NR_CPF_OPERADOR,
+                   TS.DS_TIPO_SERVIDOR,
+                   LO.DS_LOTACAO AS DESCRICAO_LOT_ORIGEM,
+                   LE.DS_LOTACAO AS DESCRICAO_LOT_EXER,
+                   CE1.DT_INGRESSO_SERVIDOR,
+                   CA.cargo_rh,
+                   MOV.*
+            FROM AGU_RH.VW_REL_MOVIMENTACAO MOV
+                     INNER JOIN SERVIDOR SER ON SER.ID_SERVIDOR = MOV.ID_SERVIDOR
+                     INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON CE1.ID_SERVIDOR = MOV.ID_SERVIDOR
+                     INNER JOIN AGU_RH.TIPO_SERVIDOR TS ON (SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR)
+                     INNER JOIN AGU_RH.LOTACAO LO ON (LO.ID_LOTACAO = MOV.ID_LOTACAO_ORIGEM)
+                     INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
+                     inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)
+            $whereFilter ");
+
+            return $sql;
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
         }
