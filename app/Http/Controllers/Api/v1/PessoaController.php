@@ -79,13 +79,19 @@ class PessoaController extends Controller
     public function buscaAfastamentoServidor($tpDocumento, $dtInicio)
     {
         $modelo = new Pessoa();
-        return json_encode($modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio));
+        return $modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio);
     }
 
     public function buscaAfastamentoUnidade($tpDocumento, $dtInicio)
     {
         $modelo = new Pessoa();
-        return json_encode($modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio));
+        return $modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio);
+    }
+
+    public function buscaMovimentacao(Request $request)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaMovimentacao($request);
     }
 
 
@@ -99,7 +105,6 @@ class PessoaController extends Controller
     public function validaParametros()
     {
         $validador = $this->getValidationFactory()->make(request()->all(), $this->retornaRegras());
-
         return !$validador->fails();
     }
 
@@ -143,7 +148,5 @@ class PessoaController extends Controller
         $params = request()->all();
         return isset($params[$parametro]) ? $params[$parametro] : $default;
     }
-
-
 
 }
