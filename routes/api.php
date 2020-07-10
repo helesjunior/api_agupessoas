@@ -43,11 +43,14 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('requisicoes', 'PessoaController@listarRequisicoes');
     Route::get('vacancias', 'PessoaController@listarVacancias');
 
+    //feature/12
+    Route::get('controle-estrutura', 'PessoaController@buscaControleEstrutura')->name('movimentacao');
+
     //feature-13
     Route::get('afastamento-servidor/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoServidor')->name('afastamento-servidor');
     Route::get('afastamento-unidade/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoUnidade')->name('afastamento-unidade');
 
-    //feature-14
+    //feature/14
     Route::get('movimentacao', 'PessoaController@buscaMovimentacao')->name('movimentacao');
 
 

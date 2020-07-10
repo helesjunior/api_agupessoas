@@ -560,6 +560,54 @@ class Pessoa extends Base
     }
 
     /**
+     * Retorna Listagem contendo dados para o controle estrutura
+     * @feature 12
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaControleEstrutura($request)
+    {
+
+        $where = array();
+        $where[] = "WHERE 1 = 1 AND FC.DT_OPERACAO_EXCLUSAO IS NULL";
+
+        if ($request->get('idCargoFuncao')) {
+            $where[] = "AND FC.ID_CARGO_FUNCAO = '{$request->get('idCargoFuncao')}'";
+        }
+
+        if ($request->get('dtExercicio')) {
+            $where[] = "AND fc.dt_exercicio  <= TO_DATE('{$request->get('dtExercicio')}', 'DD/MM/YY')";
+        }
+
+        if ($request->get('dtExoneracao')) {
+            $where[] = "AND fc.dt_exoneracao >= TO_DATE('{$request->get('dtExoneracao')}', 'DD/MM/YY')";
+        }
+
+        if ($request->get('idRh')) {
+            $where[] = "AND S.ID_RH = {$request->get('idRh')}  and fc.id_rh = {$request->get('idRh')}";
+        }
+
+        $whereFilter = implode(" ", $where);
+
+        try {
+            $sql = DB::select("SELECT s.id_servidor, fc.id_funcao_comissionada, fc.id_norma_nomeacao,
+                                            s.nm_servidor || '(' || s.cd_servidor || ')' as Ocupante ,
+                                            TO_CHAR(fc.dt_posse,'dd/MM/yyyy') as Posse,
+                                            TO_CHAR(fc.dt_exercicio,'dd/MM/yyyy') as Exercicio,
+                                            TO_CHAR(fc.dt_exoneracao,'dd/MM/yyyy') as Exoneracao
+                                     FROM servidor s
+                                              INNER JOIN funcao_comissionada fc on (s.id_servidor = fc.id_servidor)
+                                              INNER JOIN tipo_ocupacao toc on (fc.id_tipo_ocupacao = toc.id_tipo_ocupacao)
+                                     $whereFilter");
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+
+    }
+
+    /**
      * Retorna listagem contendo os dados do Controle de Estrutura
      *
      * @return array
