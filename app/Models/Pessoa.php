@@ -265,6 +265,120 @@ class Pessoa extends Base
     }
 
     /**
+     * Retorna a lista de servidores e seus estágios com data de início e fim
+     *
+     * @param $dtExercicio
+     * @return string[]
+     */
+    public function retornarDadosEstagios($dtExercicio)
+    {
+        try {
+            $sql = '
+            SELECT "NOME DO SERVIDOR"
+                 , CARGO
+                 , CPF
+                 , SIAPE
+                 , "UNIDADE DE EXERCICIO"
+                 , "DATA INICIO ESTAGIO"
+                 , "DATA FIM ESTAGIO"
+            FROM (
+                     SELECT SER.NM_SERVIDOR                  AS "NOME DO SERVIDOR",
+                            CA.DS_CARGO_RH                   AS CARGO,
+                            DOC.NR_DOCUMENTACAO              AS CPF,
+                            DF.CD_MATRICULA_SIAPE            AS SIAPE,
+                            LOT1.DS_LOTACAO                  AS "UNIDADE DE EXERCICIO",
+                            VIN.T05_DT_INICIO_EXERCICIO      AS "DATA INICIO ESTAGIO",
+                            VIN.T05_DT_FIM_COMISSAO_AVALIADO AS "DATA FIM ESTAGIO"
+                          ,
+                         MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                          ,
+                         MOV.DT_INICIO_MOVIMENTACAO
+                     FROM AGU_RH.SERVIDOR SER
+                         JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                         JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                         JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                         LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                         JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                         INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                         JOIN XAGU_ESTAGIO_CONFIRMATORIO.T05_VINCULO VIN
+                            ON VIN.T05_NUM_CPF_AVALIADO = DOC.NR_DOCUMENTACAO AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                    WHERE TA.CD_TIPO_AFASTAMENTO NOT IN
+                          (\'0069\', \'0070\', \'0071\', \'0073\', \'0074\', \'0086\', \'0261\', \'0324\', \'0327\', \'0328\', \'0328\')
+                        AND DF.DT_INGRESSO_ORGAO >= TO_DATE('. "'{$dtExercicio}'" .', \'DD/MM/YYYY\')
+                        AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                        AND LOT1.CD_LOTACAO IN (\'999999173\', \'800000001\')
+                  ORDER BY NM_SERVIDOR ASC, DT_INICIO_AFASTAMENTO ASC) s
+            WHERE s.DT_MOV = s.DT_INICIO_MOVIMENTACAO;
+            ';
+            return DB::select($sql);
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna a lista de afastamentos dos servidores AU e PFN
+     *
+     * @param $dtExercicio
+     * @return mixed
+     */
+    public function retornarDadosAfastamentos($dtExercicio)
+    {
+        try {
+            $sql = '
+            SELECT "NOME DO SERVIDOR"
+                 , CARGO
+                 , CPF
+                 , SIAPE
+                 , "UNIDADE DE EXERCICIO"
+                 , "CODIGO DO AFASTAMENTO"
+                 , "DESCRICAO TIPO AFASTAMENTO"
+                 , "DATA DE INICIO DO AFASTAMENTO"
+                 , "DATA FINAL DO AFASTAMENTO"
+                 , "DATA INGRESSO ORGAO"
+                 , "DATA FIM ESTAGIO"
+            FROM (
+                 SELECT SER.NM_SERVIDOR                  AS "NOME DO SERVIDOR",
+                        CA.DS_CARGO_RH                   AS CARGO,
+                        DOC.NR_DOCUMENTACAO              AS CPF,
+                        DF.CD_MATRICULA_SIAPE            AS SIAPE,
+                        LOT1.DS_LOTACAO                  AS "UNIDADE DE EXERCICIO",
+                        TA.CD_TIPO_AFASTAMENTO           AS "CODIGO DO AFASTAMENTO",
+                        TA.DS_TIPO_AFASTAMENTO           AS "DESCRICAO TIPO AFASTAMENTO",
+                        A.DT_INICIO_AFASTAMENTO          AS "DATA DE INICIO DO AFASTAMENTO",
+                        A.DT_FIM_AFASTAMENTO             AS "DATA FINAL DO AFASTAMENTO",
+                        DF.DT_INGRESSO_ORGAO             AS "DATA INGRESSO ORGAO",
+                        VIN.T05_DT_FIM_COMISSAO_AVALIADO AS "DATA FIM ESTAGIO",
+                        MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV,
+                        MOV.DT_INICIO_MOVIMENTACAO
+                 FROM AGU_RH.SERVIDOR SER
+                     JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                     JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                     JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                     LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                     LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                     LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                     JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                     INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                     LEFT JOIN XAGU_ESTAGIO_CONFIRMATORIO.T05_VINCULO VIN
+                        ON VIN.T05_NUM_CPF_AVALIADO = DOC.NR_DOCUMENTACAO AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                WHERE TA.CD_TIPO_AFASTAMENTO NOT IN
+              (' . "'0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324', '0327', '0328', '0328'" . ')
+            AND DF.DT_INGRESSO_ORGAO >= TO_DATE(' . "'{$dtExercicio}', 'DD/MM/YYYY'" . ')
+                    AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                    AND LOT1.CD_LOTACAO IN (' . "'999999173'" . ", '800000001' " . ')
+                ORDER BY NM_SERVIDOR ASC, DT_INICIO_AFASTAMENTO ASC) s
+            WHERE s.DT_MOV = s.DT_INICIO_MOVIMENTACAO;
+            ';
+            return DB::select($sql);
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
      * Retorna Listagem contendo dados para o ConectaTCU
      *
      * @return array
@@ -274,21 +388,21 @@ class Pessoa extends Base
 
     public function retornaConectaTCU($cpf)
     {
-       $result =  DB::table('SERVIDOR')
+        $result = DB::table('SERVIDOR')
             ->join('DOCUMENTACAO', 'DOCUMENTACAO.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
             ->leftJoin('DADO_FUNCIONAL', 'DADO_FUNCIONAL.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
             ->leftJoin('cargo_efetivo', 'cargo_efetivo.id_servidor', '=', 'servidor.id_servidor')
             ->leftJoin('cargo', 'cargo.id_cargo', '=', 'cargo_efetivo.id_cargo')
             ->select('SERVIDOR.NM_SERVIDOR as nome do servidor',
                 'DOCUMENTACAO.NR_DOCUMENTACAO as cpf',
-                DB::raw( "CASE
+                DB::raw("CASE
                             WHEN cargo.cd_cargo_rh IN ('410001','410004','R410004','414001','414017','R414017')
                                 THEN 'ADVOGADO DA UNIÃO'
                             WHEN cargo.CD_CARGO_RH IN ('408001','408002','R408001','R408002')
                                 THEN 'PROCURADOR FEDERAL'
                             ELSE 'SERVIDOR'
                           END  AS CARREIRA"),
-                DB::raw( "CASE
+                DB::raw("CASE
                             WHEN  servidor.in_status_servidor ='1' THEN 'ATIVO'
                             ELSE 'INATIVO'
                           END  AS STATUS"),
@@ -296,10 +410,10 @@ class Pessoa extends Base
                 'DADO_FUNCIONAL.CD_MATRICULA_SIAPE as matricula_siape',
                 'cargo.cd_cargo_rh as codigo do cargo',
                 'cargo.ds_cargo_rh as nome do cargo',
-                 DB::raw('SYSDATE as consultado_em')
+                DB::raw('SYSDATE as consultado_em')
             )
-            ->where('DOCUMENTACAO.NR_DOCUMENTACAO',$cpf)
-           ->whereIn('CD_CARGO_RH', [410001,410004,'R410004',414001,414017,'R414017',408001,408002,'R408001','R408002'])
+            ->where('DOCUMENTACAO.NR_DOCUMENTACAO', $cpf)
+            ->whereIn('CD_CARGO_RH', [410001, 410004, 'R410004', 414001, 414017, 'R414017', 408001, 408002, 'R408001', 'R408002'])
             ->first();
 
         return $result;

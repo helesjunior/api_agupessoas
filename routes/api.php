@@ -1,4 +1,4 @@
-<?php
+    <?php
 
 use Illuminate\Http\Request;
 
@@ -41,6 +41,10 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('provimentos', 'PessoaController@listarProvimentos');
     Route::get('requisicoes', 'PessoaController@listarRequisicoes');
     Route::get('vacancias', 'PessoaController@listarVacancias');
+
+    # Redmine issue 173
+    Route::get('estagios/dtExercicio/{dtExercicio}', 'PessoaController@listarEstagios');
+    Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');
 });
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
