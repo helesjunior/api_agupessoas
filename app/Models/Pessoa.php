@@ -274,43 +274,51 @@ class Pessoa extends Base
     {
         try {
             $sql = '
-            SELECT "NOME DO SERVIDOR"
-                 , CARGO
-                 , CPF
-                 , SIAPE
-                 , "UNIDADE DE EXERCICIO"
-                 , "DATA INICIO ESTAGIO"
-                 , "DATA FIM ESTAGIO"
-            FROM (
-                     SELECT SER.NM_SERVIDOR                  AS "NOME DO SERVIDOR",
-                            CA.DS_CARGO_RH                   AS CARGO,
-                            DOC.NR_DOCUMENTACAO              AS CPF,
-                            DF.CD_MATRICULA_SIAPE            AS SIAPE,
-                            LOT1.DS_LOTACAO                  AS "UNIDADE DE EXERCICIO",
-                            VIN.T05_DT_INICIO_EXERCICIO      AS "DATA INICIO ESTAGIO",
-                            VIN.T05_DT_FIM_COMISSAO_AVALIADO AS "DATA FIM ESTAGIO"
-                          ,
-                         MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
-                          ,
-                         MOV.DT_INICIO_MOVIMENTACAO
-                     FROM AGU_RH.SERVIDOR SER
-                         JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
-                         JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
-                         JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
-                         LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
-                         LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
-                         LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
-                         JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
-                         INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
-                         JOIN XAGU_ESTAGIO_CONFIRMATORIO.T05_VINCULO VIN
-                            ON VIN.T05_NUM_CPF_AVALIADO = DOC.NR_DOCUMENTACAO AND DOC.ID_TIPO_DOCUMENTACAO = 1
-                    WHERE TA.CD_TIPO_AFASTAMENTO NOT IN
-                          (\'0069\', \'0070\', \'0071\', \'0073\', \'0074\', \'0086\', \'0261\', \'0324\', \'0327\', \'0328\', \'0328\')
-                        AND DF.DT_INGRESSO_ORGAO >= TO_DATE('. "'{$dtExercicio}'" .', \'DD/MM/YYYY\')
-                        AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
-                        AND LOT1.CD_LOTACAO IN (\'999999173\', \'800000001\')
-                  ORDER BY NM_SERVIDOR ASC, DT_INICIO_AFASTAMENTO ASC) s
-            WHERE s.DT_MOV = s.DT_INICIO_MOVIMENTACAO;
+SELECT NOME,
+       CARGO,
+       UNIDADE_EXERCICIO,
+       CPF,
+       SIAPE,
+       TO_CHAR(DT_INGRESSO, \'DD-MM-YYYY\'),
+       CASE
+           WHEN DT_FIM_ESTAGIO IS NULL THEN TO_CHAR(DT_FIM_PREVISTO, \'DD-MM-YYYY\')
+           ELSE TO_CHAR(DT_FIM_ESTAGIO, \'DD-MM-YYYY\')
+           END AS DT_FIM_ESTAGIO
+FROM (
+         SELECT SER.ID_SERVIDOR
+              , SER.NM_SERVIDOR                              AS NOME
+              , CA.DS_CARGO_RH                               AS CARGO
+              , LOT1.DS_LOTACAO                              AS UNIDADE_EXERCICIO
+              , DOC.NR_DOCUMENTACAO                          AS CPF
+              , DF.CD_MATRICULA_SIAPE                        AS SIAPE
+              , DF.DT_INGRESSO_SERVICO_PUBLICO               AS DT_INGRESSO
+              , ADD_MONTHS(DT_INGRESSO_SERVICO_PUBLICO, 36)  AS DT_FIM_PREVISTO
+              , ADD_MONTHS(DT_INGRESSO_SERVICO_PUBLICO, 42) +
+                (SELECT SUM(cast(NVL(DT_FIM_AFASTAMENTO - DT_INICIO_AFASTAMENTO, 0) AS NUMERIC)) AS DT_FIM
+                 FROM AFASTAMENTO
+                 WHERE ID_SERVIDOR = SER.ID_SERVIDOR
+                   AND ID_TIPO_AFASTAMENTO IN
+                       (
+                           SELECT ID_TIPO_AFASTAMENTO
+                           FROM TIPO_AFASTAMENTO
+                           WHERE CD_TIPO_AFASTAMENTO NOT IN
+                                 (\'0069\', \'0070\', \'0071\', \'0073\', \'0074\', \'0086\', \'0261\', \'0324\', \'0327\', \'0328\',
+                                  \'0328\')
+                       )
+                   AND DT_INICIO_AFASTAMENTO >= DF.DT_INGRESSO_SERVICO_PUBLICO
+                   AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(TO_DATE(DF.DT_INGRESSO_SERVICO_PUBLICO, \'DD/MM/YYYY\'),
+                                                        42)) AS DT_FIM_ESTAGIO
+         FROM SERVIDOR SER
+                  JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                  JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                  JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                  LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                  LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                  LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+         WHERE DF.DT_INGRESSO_SERVICO_PUBLICO >= TO_DATE(' . "'{$dtExercicio}', 'DD/MM/YYYY'" . ')
+           AND MOV.DT_FINAL_MOVIMENTACAO IS NULL
+         ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR
+     ) consulta
             ';
             return DB::select($sql);
         } catch (\Exception $e) {
