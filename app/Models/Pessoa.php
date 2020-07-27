@@ -375,7 +375,7 @@ FROM (
            AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO, 42)
            AND CD_TIPO_AFASTAMENTO NOT IN
            ' . "('0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324', '0327', '0328', '0328')" . '
-         ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR, A.DT_INICIO_AFASTAMENTO ASC) consulta;
+         ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR, A.DT_INICIO_AFASTAMENTO ASC) consulta
             ';
             return DB::select($sql);
         } catch (\Exception $e) {
