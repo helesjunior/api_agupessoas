@@ -310,7 +310,7 @@ FROM (SELECT SER.ID_SERVIDOR,
                LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
       WHERE DF.DT_INGRESSO_SERVICO_PUBLICO >= TO_DATE(' . "'{$dtExercicio}'" . ', \'DD/MM/YYYY\')
         AND MOV.DT_FINAL_MOVIMENTACAO IS NULL
-        AND CA.CD_CARGO_RH = ' . "('410001')" . '
+        AND CA.CD_CARGO_RH = ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
       ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR) consulta
 ';
             return DB::select($sql);
@@ -359,7 +359,7 @@ FROM (
                      , 42)
                    AND CD_TIPO_AFASTAMENTO NOT IN
                    ' . "('0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324', '0327', '0328', '0328')" . '
-                   AND CA.CD_CARGO_RH = ' . "('410001')" . '
+                   AND CA.CD_CARGO_RH = ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
                    )  AS TOTAL_MEMBROS_AFASTADOS
          FROM SERVIDOR SER
                   JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
@@ -377,7 +377,7 @@ FROM (
            AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO, 42)
            AND CD_TIPO_AFASTAMENTO NOT IN
            ' . "('0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324', '0327', '0328', '0328')" . '
-           AND CA.CD_CARGO_RH = ' . "('410001')" . '
+           AND CA.CD_CARGO_RH = ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
          ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR, A.DT_INICIO_AFASTAMENTO ASC) consulta
             ';
             return DB::select($sql);
