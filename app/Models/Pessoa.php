@@ -567,43 +567,183 @@ class Pessoa extends Base
      */
     public function retornaControleEstrutura($request)
     {
-
         $where = array();
-        $where[] = "WHERE 1 = 1 AND FC.DT_OPERACAO_EXCLUSAO IS NULL";
+        $where[] = "WHERE 1 = 1";
 
-        if ($request->get('idCargoFuncao')) {
-            $where[] = "AND FC.ID_CARGO_FUNCAO = '{$request->get('idCargoFuncao')}'";
+        if ($request->get('lotacaoInicio')) {
+            $where[] = "AND AA.CD_LOTACAO >= '{$request->get('lotacaoInicio')}'";
         }
 
-        if ($request->get('dtExercicio')) {
-            $where[] = "AND fc.dt_exercicio  <= TO_DATE('{$request->get('dtExercicio')}', 'DD/MM/YY')";
+        if ($request->get('lotacaoFim')) {
+            $where[] = "AND AA.CD_LOTACAO <= '{$request->get('lotacaoFim')}'";
         }
 
-        if ($request->get('dtExoneracao')) {
-            $where[] = "AND fc.dt_exoneracao >= TO_DATE('{$request->get('dtExoneracao')}', 'DD/MM/YY')";
+        if ($request->get('funcao')) {
+            $request->offsetSet('funcao', strtoupper($request->get('funcao')));
+            $where[] = "AND UPPER(FG.CD_FUNCAO_GRATIFICADA) LIKE '%{$request->get('funcao')}%'";
         }
 
-        if ($request->get('idRh')) {
-            $where[] = "AND S.ID_RH = {$request->get('idRh')}  and fc.id_rh = {$request->get('idRh')}";
+        if ($request->get('dataBase')) {
+            $where[] = "  AND AA.DT_CRIACAO_CARGO <= TO_DATE('{$request->get('dataBase')}', 'dd/MM/yyyy')";
         }
 
         $whereFilter = implode(" ", $where);
 
         try {
-            $sql = DB::select("SELECT s.id_servidor, fc.id_funcao_comissionada, fc.id_norma_nomeacao,
-                                            s.nm_servidor || '(' || s.cd_servidor || ')' as Ocupante ,
-                                            TO_CHAR(fc.dt_posse,'dd/MM/yyyy') as Posse,
-                                            TO_CHAR(fc.dt_exercicio,'dd/MM/yyyy') as Exercicio,
-                                            TO_CHAR(fc.dt_exoneracao,'dd/MM/yyyy') as Exoneracao
-                                     FROM servidor s
-                                              INNER JOIN funcao_comissionada fc on (s.id_servidor = fc.id_servidor)
-                                              INNER JOIN tipo_ocupacao toc on (fc.id_tipo_ocupacao = toc.id_tipo_ocupacao)
-                                     $whereFilter");
+
+            $sql = DB::select("SELECT CASE
+                                               WHEN AA.DS_LOTACAO IS NULL THEN
+                                                   AA.CD_LOTACAO
+                                               ELSE
+                                                   AA.CD_LOTACAO || ' - ' || AA.DS_LOTACAO
+                                               END                                            AS LOTACAO,
+                                           CASE
+                                               WHEN AA.DS_CARGO_FUNCAO IS NULL THEN
+                                                   AA.CD_CARGO_FUNCAO
+                                               ELSE
+                                                   AA.CD_CARGO_FUNCAO || ' - ' || AA.DS_CARGO_FUNCAO
+                                               END                                            AS CARGO,
+                                           FG.CD_FUNCAO_GRATIFICADA                           AS FUNCAO,
+                                           AA.DT_CRIACAO_CARGO,
+                                           AA.DT_EXTINCAO_CARGO,
+                                           CASE
+                                               WHEN SV.CD_SERVIDOR IS NULL THEN
+                                                   'Vago'
+                                               ELSE
+                                                   SV.NM_SERVIDOR || ' (' || SV.CD_SERVIDOR || ')'
+                                               END                                            AS OCUPANTE,
+                                           CASE
+                                               WHEN NR.NR_DOCUMENTO_NORMA IS NULL THEN
+                                                   '-'
+                                               ELSE
+                                                       FD.DS_FORMA_DOCUMENTO ||
+                                                       ' ' ||
+                                                       NR.NR_DOCUMENTO_NORMA ||
+                                                       ' de ' ||
+                                                       TO_CHAR(NR.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY') ||
+                                                       '. ' ||
+                                                       TP.DS_TIPO_PUBLICACAO ||
+                                                       ' Nº ' ||
+                                                       NR.NR_PUBLICACAO_NORMA ||
+                                                       ' de ' ||
+                                                       TO_CHAR(NR.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||
+                                                       '.'
+                                               END                                            AS ATO,
+                                           NVL(TO_CHAR(AA.DATA_POSSE, 'DD/MM/YYYY'), '-')     AS POSSE,
+                                           NVL(TO_CHAR(AA.DATA_EXERCICIO, 'DD/MM/YYYY'), '-') AS EXERCICIO,
+                                           LT.SG_ORGAO                                        AS ORIGEM
+                                    FROM (
+                                             SELECT CF.ID_FUNCAO_GRATIFICADA,
+                                                    CF.ID_CARGO_FUNCAO,
+                                                    CF.CD_CARGO_FUNCAO,
+                                                    CF.DS_CARGO_FUNCAO,
+                                                    CF.ID_RH,
+                                                    LT.CD_LOTACAO,
+                                                    LT.DS_LOTACAO,
+                                                    0                    AS SUBSTITUTO,
+                                                    FC.ID_SERVIDOR       AS ID_SERVIDOR,
+                                                    FC.ID_NORMA_NOMEACAO AS ID_NORMA,
+                                                    FC.DT_POSSE          AS DATA_POSSE,
+                                                    FC.DT_EXERCICIO      AS DATA_EXERCICIO,
+                                                    CF.DT_CRIACAO_CARGO,
+                                                    CF.DT_EXTINCAO_CARGO
+                                             FROM CARGO_FUNCAO CF
+                                                      INNER JOIN
+                                                  LOTACAO LT ON
+                                                          LT.ID_LOTACAO = CF.ID_LOTACAO
+                                                          -- AND LT.CD_LOTACAO = '100000002'
+                                                          AND LT.IN_ATIVO = 1
+                                                          AND LT.DT_EXTINCAO_LOTACAO IS NULL
+                                                          AND LT.DT_OPERACAO_EXCLUSAO IS NULL
+                                                      LEFT JOIN
+                                                  FUNCAO_COMISSIONADA FC ON
+                                                          FC.ID_CARGO_FUNCAO = CF.ID_CARGO_FUNCAO
+                                                          AND DT_EXONERACAO IS NULL
+                                                          AND FC.DT_OPERACAO_EXCLUSAO IS NULL
+                                             WHERE CF.DT_EXTINCAO_CARGO IS NULL
+                                             UNION ALL
+                                             SELECT CF.ID_FUNCAO_GRATIFICADA,
+                                                    CF.ID_CARGO_FUNCAO,
+                                                    'Substituto(a)',
+                                                    NULL                      AS DS_CARGO_FUNCAO,
+                                                    CF.ID_RH,
+                                                    LT.CD_LOTACAO,
+                                                    LT.DS_LOTACAO,
+                                                    1                         AS SUBSTITUTO,
+                                                    FS.ID_SERVIDOR_SUBSTITUTO AS ID_SERVIDOR,
+                                                    FS.ID_NORMA_INICIO_SUBST  AS ID_NORMA,
+                                                    FS.DT_INICIO_SUBSTITUICAO AS DATA_POSSE,
+                                                    FS.DT_INICIO_SUBSTITUICAO AS DATA_EXERCICIO,
+                                                    CF.DT_CRIACAO_CARGO,
+                                                    CF.DT_EXTINCAO_CARGO
+                                             FROM CARGO_FUNCAO CF
+                                                      INNER JOIN
+                                                  LOTACAO LT ON
+                                                          LT.ID_LOTACAO = CF.ID_LOTACAO
+                                                          -- AND LT.CD_LOTACAO = '100000002'
+                                                          AND LT.IN_ATIVO = 1
+                                                          AND LT.DT_EXTINCAO_LOTACAO IS NULL
+                                                          AND LT.DT_OPERACAO_EXCLUSAO IS NULL
+                                                      INNER JOIN
+                                                  FUNCAO_COMISSIONADA_SUBST FS ON
+                                                          FS.ID_CARGO_FUNCAO = CF.ID_CARGO_FUNCAO
+                                                          AND DT_FINAL_SUBSTITUICAO IS NULL
+                                                          AND FS.DT_OPERACAO_EXCLUSAO IS NULL
+                                             WHERE CF.DT_EXTINCAO_CARGO IS NULL
+                                         ) AA
+                                             LEFT JOIN
+                                         FUNCAO_GRATIFICADA FG ON
+                                             FG.ID_FUNCAO_GRATIFICADA = AA.ID_FUNCAO_GRATIFICADA
+                                             LEFT JOIN
+                                         SERVIDOR SV ON
+                                             SV.ID_SERVIDOR = AA.ID_SERVIDOR
+                                             LEFT JOIN
+                                         NORMA NR ON
+                                                 NR.ID_NORMA = AA.ID_NORMA
+                                                 AND NR.DT_OPERACAO_EXCLUSAO IS NULL
+                                             LEFT JOIN
+                                         BASE_LEGAL BL ON
+                                             BL.ID_BASE_LEGAL = NR.ID_BASE_LEGAL
+                                             LEFT JOIN
+                                         FORMA_DOCUMENTO FD ON
+                                             FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO
+                                             LEFT JOIN
+                                         TIPO_PUBLICACAO TP ON
+                                             TP.ID_TIPO_PUBLICACAO = NR.ID_TIPO_PUBLICACAO
+                                             LEFT JOIN
+                                         (
+                                             SELECT U.ID_SERVIDOR,
+                                                    O.SG_ORGAO
+                                             FROM (
+                                                      SELECT MAX(ID_MOVIMENTACAO) ULTIMA,
+                                                             ID_SERVIDOR
+                                                      FROM MOVIMENTACAO
+                                                      GROUP BY ID_SERVIDOR
+                                                  ) U
+                                                      LEFT JOIN
+                                                  MOVIMENTACAO N ON
+                                                      N.ID_MOVIMENTACAO = U.ULTIMA
+                                                      LEFT JOIN
+                                                  ORGAO O ON
+                                                      O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                                         ) LT ON
+                                             LT.ID_SERVIDOR = SV.ID_SERVIDOR 
+                                                
+                                    $whereFilter
+                                    
+                                    ORDER BY
+                                        AA.CD_LOTACAO ASC,
+                                        FG.CD_FUNCAO_GRATIFICADA ASC,
+                                        AA.ID_CARGO_FUNCAO ASC,
+                                        AA.CD_CARGO_FUNCAO ASC,
+                                        AA.SUBSTITUTO ASC");
 
             return $sql;
+
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
         }
+
 
     }
 

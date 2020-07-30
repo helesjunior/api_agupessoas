@@ -44,7 +44,7 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('vacancias', 'PessoaController@listarVacancias');
 
     //feature/12
-    Route::get('controle-estrutura', 'PessoaController@buscaControleEstrutura')->name('movimentacao');
+    Route::get('controle-estrutura', 'PessoaController@buscaControleEstrutura')->name('controle-estrutura');
 
     //feature-13
     Route::get('afastamento-servidor/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoServidor')->name('afastamento-servidor');
