@@ -300,7 +300,8 @@ ADD_MONTHS(DT_INGRESSO_SERVICO_PUBLICO, 36) +
             AND ID_TIPO_AFASTAMENTO IN (SELECT ID_TIPO_AFASTAMENTO
                                             FROM TIPO_AFASTAMENTO
                                             WHERE CD_TIPO_AFASTAMENTO NOT IN
-' . "('0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324','0327', '0328', '0328'))  ";
+' . "('0069', '3123', '1005304', '3082', '1000060', '1000063', '3014', '3114', '1002904', '1003304',
+                    '3115', '31211','31212', '31213', '31214', '31215', '31216', '31217'))  ";
                      $sql .= '
             AND DT_INICIO_AFASTAMENTO >= DF.DT_INGRESSO_SERVICO_PUBLICO
             AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO, 42)) AS DT_FIM_ESTAGIO
@@ -361,7 +362,8 @@ FROM (
                    AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO
                      , 36)
                    AND CD_TIPO_AFASTAMENTO NOT IN
-                   ' . "('0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324', '0327', '0328', '0328')" . '
+                   ' . "('0069', '3123', '1005304', '3082', '1000060', '1000063', '3014', '3114', '1002904', '1003304',
+                    '3115', '31211','31212', '31213', '31214', '31215', '31216', '31217')" . '
                    AND CA.CD_CARGO_RH IN ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
                    )  AS TOTAL_MEMBROS_AFASTADOS
          FROM SERVIDOR SER
@@ -379,7 +381,8 @@ FROM (
            AND DT_INICIO_AFASTAMENTO >= DF.DT_INGRESSO_SERVICO_PUBLICO
            AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO, 42)
            AND CD_TIPO_AFASTAMENTO NOT IN
-           ' . "('0069', '0070', '0071', '0073', '0074', '0086', '0261', '0324', '0327', '0328', '0328')" . '
+           ' . "('0069', '3123', '1005304', '3082', '1000060', '1000063', '3014', '3114', '1002904', '1003304',
+                    '3115', '31211','31212', '31213', '31214', '31215', '31216', '31217')" . '
             AND CA.CD_CARGO_RH IN ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
          ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR, A.DT_INICIO_AFASTAMENTO ASC) consulta
             ';
