@@ -99,7 +99,59 @@ class PessoaController extends Controller
     public function buscaServidorTcu($cpf)
     {
         $modelo = new Pessoa();
-         return json_encode($modelo->retornaConectaTCU($cpf));
+        return json_encode($modelo->retornaConectaTCU($cpf));
+    }
+
+    /**
+     * @feature 13
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaAfastamentoServidor($tpDocumento, $dtInicio)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio);
+    }
+
+    /**
+     * @feature 13
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaAfastamentoUnidade($tpDocumento, $dtInicio)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio);
+    }
+
+    /**
+     * @feature 14
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaMovimentacao(Request $request)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaMovimentacao($request);
+    }
+
+    /**
+     * @feature 12
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaControleEstrutura(Request $request)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaControleEstrutura($request);
     }
 
     /**
@@ -112,7 +164,6 @@ class PessoaController extends Controller
     public function validaParametros()
     {
         $validador = $this->getValidationFactory()->make(request()->all(), $this->retornaRegras());
-
         return !$validador->fails();
     }
 
@@ -156,7 +207,5 @@ class PessoaController extends Controller
         $params = request()->all();
         return isset($params[$parametro]) ? $params[$parametro] : $default;
     }
-
-
 
 }
