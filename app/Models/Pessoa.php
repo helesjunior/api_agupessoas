@@ -727,10 +727,10 @@ class Pessoa extends Base
                                                   ORGAO O ON
                                                       O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
                                          ) LT ON
-                                             LT.ID_SERVIDOR = SV.ID_SERVIDOR 
-                                                
+                                             LT.ID_SERVIDOR = SV.ID_SERVIDOR
+
                                     $whereFilter
-                                    
+
                                     ORDER BY
                                         AA.CD_LOTACAO ASC,
                                         FG.CD_FUNCAO_GRATIFICADA ASC,
