@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 */
 
 // API Consulta Banco de Dados
-Route::namespace('Api\v1')->prefix('v1')->group(function() {
+Route::namespace('Api\v1')->prefix('v1')->group(function () {
 
 
     Route::get('servidor/cpf/{cpf}', 'ServidorController@buscaServidorPorCpf');
@@ -28,7 +28,7 @@ Route::namespace('Api\v1')->prefix('v1')->group(function() {
 });
 
 // Route::namespace('Api\v1')->prefix('v1/pessoas')->middleware('auth:api')->group(function() {
-Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
+Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
 
     Route::get('forca-trabalho', 'PessoaController@listarForcaTrabalho');
     Route::get('funcoes', 'PessoaController@listarFuncoes');
@@ -46,8 +46,8 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('controle-estrutura', 'PessoaController@buscaControleEstrutura')->name('controle-estrutura');
 
     //feature-13
-    Route::get('afastamento-servidor/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoServidor')->name('afastamento-servidor');
-    Route::get('afastamento-unidade/{tpDocumento}/{dtInicio}', 'PessoaController@buscaAfastamentoUnidade')->name('afastamento-unidade');
+    Route::get('afastamento-servidor/tipoDocumento/{tpDocumento}/dataInicio/{dtInicio}', 'PessoaController@buscaAfastamentoServidor')->name('afastamento-servidor');
+    Route::get('afastamento-unidade/tipoDocumento/{tpDocumento}/dataInicio/{dtInicio}', 'PessoaController@buscaAfastamentoUnidade')->name('afastamento-unidade');
 
     //feature/14
     Route::get('movimentacao', 'PessoaController@buscaMovimentacao')->name('movimentacao');
