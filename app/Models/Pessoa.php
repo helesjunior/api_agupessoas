@@ -265,6 +265,133 @@ class Pessoa extends Base
     }
 
     /**
+     * Retorna a lista de servidores e seus estágios com data de início e fim
+     *
+     * @param $dtExercicio
+     * @return string[]
+     */
+    public function retornarDadosEstagios($dtExercicio)
+    {
+        try {
+            $sql = DB::select('
+            SELECT NOME,
+                   CARGO,
+                   UNIDADE_EXERCICIO,
+                   CPF,
+                   SIAPE,
+                   DT_INGRESSO,
+                   CASE
+                       WHEN DT_FIM_ESTAGIO IS NULL THEN DT_FIM_PREVISTO
+                       ELSE DT_FIM_ESTAGIO END AS DT_FIM_ESTAGIO
+            FROM (SELECT SER.ID_SERVIDOR,
+                         SER.NM_SERVIDOR                                                     AS NOME,
+                         CA.DS_CARGO_RH                                                      AS CARGO,
+                         LOT1.DS_LOTACAO                                                     AS UNIDADE_EXERCICIO,
+                         DOC.NR_DOCUMENTACAO                                                 AS CPF,
+                         DF.CD_MATRICULA_SIAPE                                               AS SIAPE,
+                         DF.DT_INGRESSO_SERVICO_PUBLICO                                      AS DT_INGRESSO,
+                         ADD_MONTHS(DT_INGRESSO_SERVICO_PUBLICO, 36)                         AS DT_FIM_PREVISTO,
+            ADD_MONTHS(DT_INGRESSO_SERVICO_PUBLICO, 36) +
+            (SELECT SUM(CAST(NVL(DT_FIM_AFASTAMENTO - DT_INICIO_AFASTAMENTO, 0) AS NUMERIC)) AS DT_FIM
+                          FROM AFASTAMENTO
+                          WHERE ID_SERVIDOR = SER.ID_SERVIDOR
+                        AND ID_TIPO_AFASTAMENTO IN (SELECT ID_TIPO_AFASTAMENTO
+                                                        FROM TIPO_AFASTAMENTO
+                                                        WHERE CD_TIPO_AFASTAMENTO NOT IN
+                        ' . "('0069', '3123', '1005304', '3082', '1000060', '1000063', '3014', '3114', '1002904',
+                        '1003304', '3115', '31211','31212', '31213', '31214', '31215', '31216', '31217')" . '
+                        AND DT_INICIO_AFASTAMENTO >= DF.DT_INGRESSO_SERVICO_PUBLICO
+                        AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO, 42)) AS DT_FIM_ESTAGIO
+                  FROM SERVIDOR SER
+                           JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                           JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                           JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR
+                                AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                           LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                  WHERE DF.DT_INGRESSO_SERVICO_PUBLICO >= TO_DATE(?, \'DD/MM/YYYY\')
+                    AND MOV.DT_FINAL_MOVIMENTACAO IS NULL
+                    AND CA.CD_CARGO_RH IN ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
+                  ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR) consulta', [$dtExercicio]);
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna a lista de afastamentos dos servidores AU e PFN
+     *
+     * @param $dtExercicio
+     * @return mixed
+     */
+    public function retornarDadosAfastamentos($dtExercicio)
+    {
+        try {
+            $sql = DB::select('
+            SELECT NOME,
+                   CARGO,
+                   UNIDADE_EXERCICIO,
+                   CPF,
+                   SIAPE,
+                   CD_AFASTAMENTO,
+                   DS_AFASTAMENTO,
+                   DT_INICIO_AFASTAMENTO,
+                   DT_FIM_AFASTAMENTO,
+                   DT_INGRESSO,
+                   TOTAL_MEMBROS_AFASTADOS
+            FROM (
+                     SELECT SER.NM_SERVIDOR                AS NOME
+                          , CA.DS_CARGO_RH                 AS CARGO
+                          , LOT1.DS_LOTACAO                AS UNIDADE_EXERCICIO
+                          , DOC.NR_DOCUMENTACAO            AS CPF
+                          , DF.CD_MATRICULA_SIAPE          AS SIAPE
+                          , DF.DT_INGRESSO_SERVICO_PUBLICO AS DT_INGRESSO
+                          , TA.CD_TIPO_AFASTAMENTO         AS CD_AFASTAMENTO
+                          , TA.DS_TIPO_AFASTAMENTO         AS DS_AFASTAMENTO
+                          , A.DT_INICIO_AFASTAMENTO
+                          , A.DT_FIM_AFASTAMENTO
+                          , (SELECT COUNT(DISTINCT ID_SERVIDOR)
+                             FROM AFASTAMENTO
+                             WHERE A.DT_INICIO_AFASTAMENTO IS NOT NULL
+                               AND DT_INICIO_AFASTAMENTO >= DF.DT_INGRESSO_SERVICO_PUBLICO
+                               AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO
+                                 , 36)
+                               AND CD_TIPO_AFASTAMENTO NOT IN
+                                ' . "('0069', '3123', '1005304', '3082', '1000060', '1000063', '3014', '3114', '1002904',
+                                '1003304', '3115', '31211','31212', '31213', '31214', '31215', '31216', '31217')" . '
+                               AND CA.CD_CARGO_RH IN
+                                ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
+                               )  AS TOTAL_MEMBROS_AFASTADOS
+                     FROM SERVIDOR SER
+                              JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                              JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                              JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR
+                                    AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                              LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                              LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                              LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                              LEFT JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                              LEFT JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                     WHERE DF.DT_INGRESSO_SERVICO_PUBLICO >= TO_DATE(?, \'DD/MM/YYYY\')
+                       AND MOV.DT_FINAL_MOVIMENTACAO IS NULL
+                       AND A.DT_INICIO_AFASTAMENTO IS NOT NULL
+                       AND DT_INICIO_AFASTAMENTO >= DF.DT_INGRESSO_SERVICO_PUBLICO
+                       AND DT_FIM_AFASTAMENTO <= ADD_MONTHS(DF.DT_INGRESSO_SERVICO_PUBLICO, 42)
+                       AND CD_TIPO_AFASTAMENTO NOT IN
+                       ' . "('0069', '3123', '1005304', '3082', '1000060', '1000063', '3014', '3114', '1002904',
+                        '1003304', '3115', '31211','31212', '31213', '31214', '31215', '31216', '31217')" . '
+                        AND CA.CD_CARGO_RH IN ' . "('R410004', 'R414017', '410001', '410004', '414001', '414017')" . '
+                     ORDER BY DF.DT_INGRESSO_SERVICO_PUBLICO, SER.NM_SERVIDOR, A.DT_INICIO_AFASTAMENTO ASC) consulta
+            ', [$dtExercicio]);
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
      * Retorna Listagem contendo dados para o ConectaTCU
      *
      * @return array
@@ -274,21 +401,21 @@ class Pessoa extends Base
 
     public function retornaConectaTCU($cpf)
     {
-       $result =  DB::table('SERVIDOR')
+        $result = DB::table('SERVIDOR')
             ->join('DOCUMENTACAO', 'DOCUMENTACAO.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
             ->leftJoin('DADO_FUNCIONAL', 'DADO_FUNCIONAL.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
             ->leftJoin('cargo_efetivo', 'cargo_efetivo.id_servidor', '=', 'servidor.id_servidor')
             ->leftJoin('cargo', 'cargo.id_cargo', '=', 'cargo_efetivo.id_cargo')
             ->select('SERVIDOR.NM_SERVIDOR as nome do servidor',
                 'DOCUMENTACAO.NR_DOCUMENTACAO as cpf',
-                DB::raw( "CASE
+                DB::raw("CASE
                             WHEN cargo.cd_cargo_rh IN ('410001','410004','R410004','414001','414017','R414017')
                                 THEN 'ADVOGADO DA UNIÃO'
                             WHEN cargo.CD_CARGO_RH IN ('408001','408002','R408001','R408002')
                                 THEN 'PROCURADOR FEDERAL'
                             ELSE 'SERVIDOR'
                           END  AS CARREIRA"),
-                DB::raw( "CASE
+                DB::raw("CASE
                             WHEN  servidor.in_status_servidor ='1' THEN 'ATIVO'
                             ELSE 'INATIVO'
                           END  AS STATUS"),
@@ -296,10 +423,10 @@ class Pessoa extends Base
                 'DADO_FUNCIONAL.CD_MATRICULA_SIAPE as matricula_siape',
                 'cargo.cd_cargo_rh as codigo do cargo',
                 'cargo.ds_cargo_rh as nome do cargo',
-                 DB::raw('SYSDATE as consultado_em')
+                DB::raw('SYSDATE as consultado_em')
             )
-            ->where('DOCUMENTACAO.NR_DOCUMENTACAO',$cpf)
-           ->whereIn('CD_CARGO_RH', [410001,410004,'R410004',414001,414017,'R414017',408001,408002,'R408001','R408002'])
+            ->where('DOCUMENTACAO.NR_DOCUMENTACAO', $cpf)
+            ->whereIn('CD_CARGO_RH', [410001, 410004, 'R410004', 414001, 414017, 'R414017', 408001, 408002, 'R408001', 'R408002'])
             ->first();
 
         return $result;

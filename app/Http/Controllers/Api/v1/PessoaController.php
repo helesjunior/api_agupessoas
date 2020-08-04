@@ -70,14 +70,36 @@ class PessoaController extends Controller
         return $model->retornaDadosVacancias();
     }
 
+    /**
+     * Lista o tempo de estágio dos servidores contando seus afastamentos
+     *
+     * @see http://redminedti.agu.gov.br/redmine/issues/173
+     * @param $dtExercicio
+     * @return array
+     */
+    public function listarEstagios($dtExercicio)
+    {
+        $model = new Pessoa();
+        return $model->retornarDadosEstagios($dtExercicio);
+    }
+
+    /**
+     * Lista os afastamentos dos servidores
+     *
+     * @see http://redminedti.agu.gov.br/redmine/issues/173
+     * @param $dtExercicio
+     * @return array
+     */
+    public function listarAfastamentos($dtExercicio)
+    {
+        $model = new Pessoa();
+        return $model->retornarDadosAfastamentos($dtExercicio);
+    }
+
     public function buscaServidorTcu($cpf)
     {
         $modelo = new Pessoa();
          return json_encode($modelo->retornaConectaTCU($cpf));
-
-
-
-
     }
 
     /**

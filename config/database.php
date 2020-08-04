@@ -93,17 +93,16 @@ return [
 
         'oracle' => [
             'driver' => 'oracle',
-            'host'          => env('DB_HOST', ''),
+            'host'          => env('DB_HOST', '172.17.24.187'),
             'port'          => env('DB_PORT', '1521'),
-            'database'      => env('DB_DATABASE', ''),
-            'username'      => env('DB_USERNAME', ''),
-            'password'      => env('DB_PASSWORD', ''),
-            'service_name' => env('DB_SERVICE_NAME', ''),
-            'schema' => env('DB_SCHEMA', ''),
+            'database'      => env('DB_DATABASE', 'HAGU'),
+            'username'      => env('DB_USERNAME', 'AGU_RH'),
+            'password'      => env('DB_PASSWORD', 'AGU_RH'),
+            'service_name' => env('DB_SERVICE_NAME', 'HAGU'),
+            'schema' => env('DB_SCHEMA', 'AGU_RH'),
             'charset' => '',
             'prefix' => '',
         ]
-
     ],
 
     /*
