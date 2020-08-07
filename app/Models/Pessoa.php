@@ -590,11 +590,9 @@ FROM (
     {
         try {
 
-
             DB::beginTransaction();
-            $sql =  DB::select("SELECT * FROM ( SELECT t.* FROM AGU_RH.VW_REL_MOVIMENTACAO t )");
+            $sql =  DB::table('AGU_RH.VW_REL_MOVIMENTACAO')->get();
             DB::commit();
-            //$sql = DB::select("SELECT * FROM ( SELECT t.* FROM AGU_RH.VW_REL_MOVIMENTACAO t ) where rownum <= 30000");
             return $sql;
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
