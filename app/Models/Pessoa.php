@@ -589,7 +589,7 @@ FROM (
     public function retornaMovimentacao()
     {
         try {
-            $sql = DB::select("SELECT * FROM ( SELECT t.* FROM AGU_RH.VW_REL_MOVIMENTACAO t )");
+            $sql = DB::select("SELECT * FROM ( SELECT t.* FROM AGU_RH.VW_REL_MOVIMENTACAO t ) where rownum <= 10000");
             return $sql;
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
