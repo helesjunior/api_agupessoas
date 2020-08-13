@@ -592,55 +592,54 @@ FROM (
         try {
 
             DB::beginTransaction();
-            $sql = DB::select("with cargo_eftv as (
-    SELECT CE.ID_CARGO_EFETIVO AS id_cargo_ef,
-           CGO.DS_CARGO_RH     as cargo_rh
-    FROM AGU_RH.CARGO_EFETIVO CE
-             INNER JOIN AGU_RH.CARGO CGO ON (CE.id_cargo = CGO.ID_CARGO)
-             INNER JOIN AGU_RH.PROVIMENTO P ON (P.ID_CARGO_EFETIVO = CE.id_cargo_efetivo)
-             INNER JOIN AGU_RH.CARGO C ON C.ID_CARGO = CE.ID_CARGO
-             LEFT JOIN AGU_RH.CARREIRA CA ON CA.ID_CARREIRA = C.ID_CARREIRA
-    WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
-      AND C.DT_OPERACAO_EXCLUSAO IS NULL
-      AND P.DT_OPERACAO_EXCLUSAO IS NULL
-)
-SELECT CE1.ID_CARGO_EFETIVO,
-       SER.NR_CPF_OPERADOR,
-       TS.DS_TIPO_SERVIDOR,
-       LO.DS_LOTACAO AS DESCRICAO_LOT_ORIGEM,
-       LE.DS_LOTACAO AS DESCRICAO_LOT_EXER,
-       CE1.DT_INGRESSO_SERVIDOR,
-       CA.cargo_rh,
-       MOV.ID_TIPO_MOVIMENTACAO,
-       MOV.DESCRICAO_MOVIMENTACAO,
-       MOV.ORGAO_MOVIMENTACAO,
-       MOV.ID_LOTACAO_ORIGEM,
-       MOV.DESCRICAO_LOT_ORIGEM,
-       MOV.COD_LOT_ORIGEM,
-       MOV.SIGLA_LOT_ORIGEM,
-       MOV.IDP_ORIGEM,
-       MOV.ID_LOTACAO_EXERCICIO,
-       MOV.DESCRICAO_LOT_EXER,
-       MOV.COD_LOT_EXER,
-       MOV.SIGLA_LOT_EXER,
-       MOV.IDP_EXER,
-       MOV.DATA_INICIO,
-       CASE
-           WHEN MOV.DATA_FINAL IS NULL THEN
-               TO_CHAR(SYSDATE, 'DD/MM/YYYY') || ' - Data atual'
-           ELSE
-               TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY')
-           END       as DATA_FINAL,
-       MOV.NOME_SERVIDOR,
-       MOV.DESCRICAO_MUNICIPIO_LOT_EXER,
-       MOV.SIGLA_UF_LOT_EXER
-FROM AGU_RH.VW_REL_MOVIMENTACAO MOV
-         INNER JOIN SERVIDOR SER ON SER.ID_SERVIDOR = MOV.ID_SERVIDOR
-         INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON CE1.ID_SERVIDOR = MOV.ID_SERVIDOR
-         INNER JOIN AGU_RH.TIPO_SERVIDOR TS ON (SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR)
-         INNER JOIN AGU_RH.LOTACAO LO ON (LO.ID_LOTACAO = MOV.ID_LOTACAO_ORIGEM)
-         INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
-         inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)");
+            $sql = DB::select("WITH cargo_eftv as (
+                                            SELECT CE.ID_CARGO_EFETIVO AS id_cargo_ef,
+                                                   CGO.DS_CARGO_RH     as cargo_rh
+                                            FROM AGU_RH.CARGO_EFETIVO CE
+                                                     INNER JOIN AGU_RH.CARGO CGO ON (CE.id_cargo = CGO.ID_CARGO)
+                                                     INNER JOIN AGU_RH.PROVIMENTO P ON (P.ID_CARGO_EFETIVO = CE.id_cargo_efetivo)
+                                                     INNER JOIN AGU_RH.CARGO C ON C.ID_CARGO = CE.ID_CARGO
+                                                     LEFT JOIN AGU_RH.CARREIRA CA ON CA.ID_CARREIRA = C.ID_CARREIRA
+                                            WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
+                                              AND C.DT_OPERACAO_EXCLUSAO IS NULL
+                                              AND P.DT_OPERACAO_EXCLUSAO IS NULL)
+                                        SELECT CE1.ID_CARGO_EFETIVO,
+                                               SER.NR_CPF_OPERADOR,
+                                               TS.DS_TIPO_SERVIDOR,
+                                               LO.DS_LOTACAO AS DESCRICAO_LOT_ORIGEM,
+                                               LE.DS_LOTACAO AS DESCRICAO_LOT_EXER,
+                                               TO_CHAR(CE1.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
+                                               CA.cargo_rh,
+                                               MOV.ID_TIPO_MOVIMENTACAO,
+                                               MOV.DESCRICAO_MOVIMENTACAO,
+                                               MOV.ORGAO_MOVIMENTACAO,
+                                               MOV.ID_LOTACAO_ORIGEM,
+                                               MOV.DESCRICAO_LOT_ORIGEM,
+                                               MOV.COD_LOT_ORIGEM,
+                                               MOV.SIGLA_LOT_ORIGEM,
+                                               MOV.IDP_ORIGEM,
+                                               MOV.ID_LOTACAO_EXERCICIO,
+                                               MOV.DESCRICAO_LOT_EXER,
+                                               MOV.COD_LOT_EXER,
+                                               MOV.SIGLA_LOT_EXER,
+                                               MOV.IDP_EXER,
+                                               TO_CHAR(MOV.DATA_INICIO, 'DD/MM/YYYY'),
+                                               CASE
+                                                   WHEN MOV.DATA_FINAL IS NULL THEN
+                                                           TO_CHAR(SYSDATE, 'DD/MM/YYYY') || ' - Data atual'
+                                                   ELSE
+                                                       TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY')
+                                                   END       as DATA_FINAL,
+                                               MOV.NOME_SERVIDOR,
+                                               MOV.DESCRICAO_MUNICIPIO_LOT_EXER,
+                                               MOV.SIGLA_UF_LOT_EXER
+                                        FROM AGU_RH.VW_REL_MOVIMENTACAO MOV
+                                                 INNER JOIN SERVIDOR SER ON SER.ID_SERVIDOR = MOV.ID_SERVIDOR
+                                                 INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON CE1.ID_SERVIDOR = MOV.ID_SERVIDOR
+                                                 INNER JOIN AGU_RH.TIPO_SERVIDOR TS ON (SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR)
+                                                 INNER JOIN AGU_RH.LOTACAO LO ON (LO.ID_LOTACAO = MOV.ID_LOTACAO_ORIGEM)
+                                                 INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
+                                                 inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)");
             DB::commit();
             return $sql;
         } catch (\Exception $e) {
