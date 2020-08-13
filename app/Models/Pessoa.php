@@ -471,7 +471,7 @@ FROM (
                ,DT_MOV
                ,DT_INICIO_MOVIMENTACAO
             from
-                (SELECT
+                (SELECT DISTINCT
                     SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
                     CA.DS_CARGO_RH  AS CARGO,
                     DOC.NR_DOCUMENTACAO AS CPF,
@@ -541,7 +541,7 @@ FROM (
                  ,"DATA DE INICIO DO AFASTAMENTO"
                  ,"DATA FINAL DO AFASTAMENTO"
             FROM
-                (SELECT
+                (SELECT DISTINCT
                      SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
                      CA.DS_CARGO_RH  AS CARGO,
                      DOC.NR_DOCUMENTACAO AS CPF,
