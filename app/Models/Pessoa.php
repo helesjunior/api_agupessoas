@@ -603,7 +603,7 @@ FROM (
                                             WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
                                               AND C.DT_OPERACAO_EXCLUSAO IS NULL
                                               AND P.DT_OPERACAO_EXCLUSAO IS NULL)
-                                        SELECT CE1.ID_CARGO_EFETIVO,
+                                        SELECT DISTINCT CE1.ID_CARGO_EFETIVO,
                                                SER.NR_CPF_OPERADOR,
                                                TS.DS_TIPO_SERVIDOR,
                                                LO.DS_LOTACAO AS DESCRICAO_LOT_ORIGEM,
