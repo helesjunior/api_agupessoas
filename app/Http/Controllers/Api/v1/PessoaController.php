@@ -142,6 +142,17 @@ class PessoaController extends Controller
     }
 
     /**
+     * @feature 173
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaIngresso()
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaIngresso();
+    }
+
+    /**
      * @feature 12
      * @param $tpDocumento
      * @param $dtInicio

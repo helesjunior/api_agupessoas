@@ -52,6 +52,9 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
     //feature/14
     Route::get('movimentacao', 'PessoaController@buscaMovimentacao')->name('movimentacao');
 
+    //feature/178
+    Route::get('ingresso', 'PessoaController@buscaIngresso')->name('ingresso');
+
     # Redmine issue 173
     Route::get('estagios/dtExercicio/{dtExercicio}', 'PessoaController@listarEstagios');
     Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');

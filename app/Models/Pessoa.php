@@ -457,53 +457,93 @@ FROM (
         try {
 
             $sql = DB::select('
-            SELECT
-               "NOME DO SERVIDOR"
-               ,CARGO
-               ,CPF
-               ,SIAPE
-               ,"UNIDADE DE EXERCICIO"
-               ,"CODIGO DO AFASTAMENTO"
-               ,"DESCRICAO TIPO AFASTAMENTO"
-               ,"DESCRICAO CID (TIPO DE DOENCA)"
-               ,"DATA DE INICIO DO AFASTAMENTO"
-               ,"DATA FINAL DO AFASTAMENTO"
-               ,DT_MOV
-               ,DT_INICIO_MOVIMENTACAO
-            from
-                (SELECT DISTINCT
-                    SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
-                    CA.DS_CARGO_RH  AS CARGO,
-                    DOC.NR_DOCUMENTACAO AS CPF,
-                    DF.CD_MATRICULA_SIAPE AS SIAPE,
-                    LOT1.DS_LOTACAO AS "UNIDADE DE EXERCICIO",
-                    TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
-                    TA.DS_TIPO_AFASTAMENTO AS "DESCRICAO TIPO AFASTAMENTO",
-                    A.DS_CID_AFASTAMENTO AS "DESCRICAO CID (TIPO DE DOENCA)",
-                    A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
-                    A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO"
-                    ,MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
-                    ,MOV.DT_INICIO_MOVIMENTACAO
-
-                FROM
-                    AGU_RH.SERVIDOR SER
-                    JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
-                    JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
-                    JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
-                    LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
-                    LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
-                    LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
-                    JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
-                    INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
-
-                WHERE
-                    DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\')
+            SELECT "NOME DO SERVIDOR"
+                 , CARGO
+                 , CPF
+                 , SEXO
+                 , IDADE
+                 , "CODIGO UNIDADE EXERCICIO"
+                 , UF
+                 , "CIDADE DA UNIDADE"
+                 , "NIVEL"
+                 , "REGIME JURIDICO"
+                 , SIAPE
+                 , "UNIDADE DE EXERCICIO"
+                 , "CODIGO DO AFASTAMENTO"
+                 , "DESCRICAO TIPO AFASTAMENTO"
+                 , "DESCRICAO CID (TIPO DE DOENCA)"
+                 , "DATA DE INICIO DO AFASTAMENTO"
+                 , "DATA FINAL DO AFASTAMENTO"
+                 , DT_MOV
+                 , DT_INICIO_MOVIMENTACAO
+                 , "SITUACAO FUNCIONAL"
+                 , "ORGAO DE ORIGEM"
+            
+            
+            from (SELECT SER.NM_SERVIDOR                                                      AS "NOME DO SERVIDOR",
+                         CA.DS_CARGO_RH                                                       AS CARGO,
+                         DOC.NR_DOCUMENTACAO                                                  AS CPF,
+                         DF.CD_MATRICULA_SIAPE                                                AS SIAPE,
+                         LOT1.DS_LOTACAO                                                      AS "UNIDADE DE EXERCICIO",
+                         TA.CD_TIPO_AFASTAMENTO                                               AS "CODIGO DO AFASTAMENTO",
+                         TA.DS_TIPO_AFASTAMENTO                                               AS "DESCRICAO TIPO AFASTAMENTO",
+                         A.DS_CID_AFASTAMENTO                                                 AS "DESCRICAO CID (TIPO DE DOENCA)",
+                         A.DT_INICIO_AFASTAMENTO                                              AS "DATA DE INICIO DO AFASTAMENTO",
+                         A.DT_FIM_AFASTAMENTO                                                 AS "DATA FINAL DO AFASTAMENTO"
+                          ,
+                         MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                          ,
+                         MOV.DT_INICIO_MOVIMENTACAO,
+            
+                         SER.CD_SEXO                                                          AS SEXO,
+                         LOT1.CD_LOTACAO                                                      AS "CODIGO UNIDADE EXERCICIO",
+            
+                         UF.SG_UF                                                             AS UF,
+                         MU.NM_MUNICIPIO || \' - \' || UF.SG_UF                                 AS "CIDADE DA UNIDADE",
+                         NI.DS_NIVEL                                                          AS "NIVEL",
+                         RJ.DS_REGIME_JURIDICO                                                AS "REGIME JURIDICO",
+                         TS.DS_TIPO_SERVIDOR                                                  AS "SITUACAO FUNCIONAL",
+                         TRUNC(MONTHS_BETWEEN(A.DT_FIM_AFASTAMENTO, SER.DT_NASCIMENTO) / 12)  AS IDADE,
+                         LT.SG_ORGAO                                                          AS "ORGAO DE ORIGEM"
+            
+            
+                  FROM AGU_RH.SERVIDOR SER
+                           LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON
+                           RJ.ID_REGIME_JURIDICO = CES.ID_REGIME_JURIDICO_DESTINO
+                           LEFT JOIN AGU_RH.TIPO_SERVIDOR TS ON SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR
+                           JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                           JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                           LEFT JOIN NIVEL NI ON CA.ID_NIVEL = NI.ID_NIVEL
+                           JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
+                           LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                           LEFT JOIN AGU_RH.ENDERECO EN ON
+                      EN.ID_ENDERECO = LOT1.ID_ENDERECO
+                           LEFT JOIN AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
+                           LEFT JOIN AGU_RH.UF UF ON
+                      MU.ID_UF = UF.ID_UF
+                           LEFT JOIN (
+                      SELECT U.ID_SERVIDOR,
+                             O.SG_ORGAO
+                      FROM (
+                               SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                               FROM MOVIMENTACAO
+                               GROUP BY ID_SERVIDOR
+                           ) U
+                               LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                               LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                  ) LT ON
+                      LT.ID_SERVIDOR = SER.ID_SERVIDOR
+                           JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                           INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                  WHERE DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\')
                     AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
-                ORDER
-                    BY NM_SERVIDOR ASC
-                    , DT_INICIO_AFASTAMENTO ASC) s
-            where
-                s.DT_MOV = s.DT_INICIO_MOVIMENTACAO', [$tpDocumento, $dtInicio]);
+                  ORDER BY NM_SERVIDOR ASC
+                         , DT_INICIO_AFASTAMENTO ASC) s
+            where s.DT_MOV = s.DT_INICIO_MOVIMENTACAO
+', [$tpDocumento, $dtInicio]);
 
             return $sql;
         } catch (\Exception $e) {
@@ -535,109 +575,42 @@ FROM (
 
             $sql = '
             SELECT
-                SEXO,
-                "CODIGO UNIDADE EXERCICIO",
-                UF,
-                "CIDADE DA UNIDADE",
-                "NIVEL",
-                "REGIME JURIDICO",
-                "SITUACAO FUNCIONAL",
-                IDADE,
-                "ORGAO DE ORIGEM",
-                "UNIDADE DE EXERCICIO",
-                "DESCRICAO TIPO AFASTAMENTO",
-                "DESCRICAO CID (TIPO DE DOENCA)",
-                TO_CHAR("DATA DE INICIO DO AFASTAMENTO", \'DD/MM/YYYY\') AS "DATA DE INICIO DO AFASTAMENTO",
-                TO_CHAR("DATA FINAL DO AFASTAMENTO", \'DD/MM/YYYY\') AS "DATA FINAL DO AFASTAMENTO"
+                 "UNIDADE DE EXERCICIO"
+                 ,"DESCRICAO TIPO AFASTAMENTO"
+                 ,"DESCRICAO CID (TIPO DE DOENCA)"
+                 ,"DATA DE INICIO DO AFASTAMENTO"
+                 ,"DATA FINAL DO AFASTAMENTO"
             FROM
-                (
-                SELECT DISTINCT
-                    SER.CD_SEXO AS SEXO,
-                    LOT1.CD_LOTACAO AS "CODIGO UNIDADE EXERCICIO",
-                    UF.SG_UF AS UF,
-                    MU.NM_MUNICIPIO || \' - \' || UF.SG_UF AS "CIDADE DA UNIDADE",
-                    NI.DS_NIVEL AS "NIVEL",
-                    RJ.DS_REGIME_JURIDICO AS "REGIME JURIDICO",
-                    TS.DS_TIPO_SERVIDOR AS "SITUACAO FUNCIONAL",
-                    TRUNC(MONTHS_BETWEEN(A.DT_FIM_AFASTAMENTO, SER.DT_NASCIMENTO) / 12) AS IDADE,
-                    LT.SG_ORGAO AS "ORGAO DE ORIGEM",
-                    SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
-                    CA.DS_CARGO_RH AS CARGO,
-                    DOC.NR_DOCUMENTACAO AS CPF,
-                    DF.CD_MATRICULA_SIAPE AS SIAPE,
-                    LOT1.DS_LOTACAO AS "UNIDADE DE EXERCICIO",
-                    TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
-                    TA.DS_TIPO_AFASTAMENTO AS "DESCRICAO TIPO AFASTAMENTO",
-                    A.DS_CID_AFASTAMENTO AS "DESCRICAO CID (TIPO DE DOENCA)",
-                    A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
-                    A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO",
-                    MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) AS DT_MOV,
-                    MOV.DT_INICIO_MOVIMENTACAO
+                (SELECT DISTINCT
+                     SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
+                     CA.DS_CARGO_RH  AS CARGO,
+                     DOC.NR_DOCUMENTACAO AS CPF,
+                     DF.CD_MATRICULA_SIAPE AS SIAPE,
+                     LOT1.DS_LOTACAO AS "UNIDADE DE EXERCICIO",
+                     TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
+                     TA.DS_TIPO_AFASTAMENTO AS "DESCRICAO TIPO AFASTAMENTO",
+                     A.DS_CID_AFASTAMENTO AS "DESCRICAO CID (TIPO DE DOENCA)",
+                     A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
+                     A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO"
+                         ,MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                         ,MOV.DT_INICIO_MOVIMENTACAO
                 FROM
-                    AGU_RH.SERVIDOR SER
-                LEFT JOIN
-                    AGU_RH.CESSAO CES ON
-                        CES.ID_SERVIDOR = SER.ID_SERVIDOR
-                LEFT JOIN
-                    AGU_RH.REGIME_JURIDICO RJ ON
-                        RJ.ID_REGIME_JURIDICO = CES.ID_REGIME_JURIDICO_DESTINO
-                LEFT JOIN AGU_RH.TIPO_SERVIDOR TS ON
-                    SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR
-                JOIN AGU_RH.CARGO_EFETIVO CE ON
-                    CE.ID_SERVIDOR = SER.ID_SERVIDOR
-                JOIN AGU_RH.CARGO CA ON
-                    CA.ID_CARGO = CE.ID_CARGO
-                LEFT JOIN
-                    NIVEL NI ON
-                        CA.ID_NIVEL = NI.ID_NIVEL
-                JOIN AGU_RH.DOCUMENTACAO DOC ON
-                    SER.ID_SERVIDOR = DOC.ID_SERVIDOR
-                    AND DOC.ID_TIPO_DOCUMENTACAO = ?
-                LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON
-                    DF.ID_SERVIDOR = SER.ID_SERVIDOR
-                LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON
-                    MOV.ID_SERVIDOR = SER.ID_SERVIDOR
-                LEFT JOIN AGU_RH.LOTACAO LOT1 ON
-                    LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
-                LEFT JOIN AGU_RH.ENDERECO EN ON
-                    EN.ID_ENDERECO = LOT1.ID_ENDERECO
-                LEFT JOIN AGU_RH.MUNICIPIO MU ON
-                    MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
-                LEFT JOIN AGU_RH.UF UF ON
-                    MU.ID_UF = UF.ID_UF
-                LEFT JOIN (
-                    SELECT
-                        U.ID_SERVIDOR,
-                        O.SG_ORGAO
-                    FROM
-                        (
-                        SELECT
-                            MAX(ID_MOVIMENTACAO) ULTIMA,
-                            ID_SERVIDOR
-                        FROM
-                            MOVIMENTACAO
-                        GROUP BY
-                            ID_SERVIDOR
-                        ) U
-                    LEFT JOIN MOVIMENTACAO N ON
-                        N.ID_MOVIMENTACAO = U.ULTIMA
-                    LEFT JOIN ORGAO O ON
-                        O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
-                    ) LT ON
-                        LT.ID_SERVIDOR = SER.ID_SERVIDOR
-                JOIN AGU_RH.AFASTAMENTO A ON
-                    A.ID_SERVIDOR = SER.ID_SERVIDOR
-                INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON
-                    TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                     AGU_RH.SERVIDOR SER
+                         JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                         JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                         JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
+                         LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                         JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                         INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
                 WHERE
-                    DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\')
-                    AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
-                ORDER BY
-                    NM_SERVIDOR ASC,
-                    DT_INICIO_AFASTAMENTO ASC
-                ) S
-            WHERE
-                S.DT_MOV = S.DT_INICIO_MOVIMENTACAO';
+                         DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\') AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                ORDER
+                     BY NM_SERVIDOR ASC
+                      , DT_INICIO_AFASTAMENTO ASC) s
+            where
+                    s.DT_MOV = s.DT_INICIO_MOVIMENTACAO';
 
             return DB::select($sql, [$tpDocumento, $dtInicio]);
 
@@ -709,6 +682,37 @@ FROM (
                                                  INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
                                                  inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)");
             DB::commit();
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o F-Ingresso
+     * @feature 178
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaIngresso()
+    {
+        ini_set("memory_limit", "512M");
+        try {
+
+            DB::beginTransaction();
+            $sql = DB::select("SELECT VW_REL_DADOFUNCIONAL.DATA_INGRESSO    AS \"Data Ingresso\",
+                                           VW_REL_CARGOEFETIVO.DESCRICAO_CARGO   AS \"Descricao do Cargo\",
+                                           VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA AS \"Matricula SIAPE\",
+                                           VW_REL_DADOFUNCIONAL.NOME_SERVIDOR    AS \"Nome do Servidor\",
+                                           VW_REL_DADOFUNCIONAL.DESC_TIPO_ADM    AS \"Tipo Admissao - Descr.\",
+                                           VW_REL_CARGOEFETIVO.ANO_CONCURSO      AS \"Concurso - Ano\",
+                                           VW_REL_DADOFUNCIONAL.VINCULO_RAIS     AS \"Rais Vinculo - Descr.\"
+                                    FROM VW_REL_CARGOEFETIVO,
+                                         VW_REL_DADOFUNCIONAL
+                                    WHERE VW_REL_CARGOEFETIVO.ID_SERVIDOR (+) = VW_REL_DADOFUNCIONAL.ID_SERVIDOR
+                                      AND VW_REL_DADOFUNCIONAL.id_rh = 1");
+            DB::commit();
+
             return $sql;
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
