@@ -58,6 +58,9 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
     //feature/179
     Route::get('rescisao', 'PessoaController@buscaRescisao')->name('rescisao');
 
+    //feature/32
+    Route::get('dimensao-unidade', 'PessoaController@buscaDimensaoUnidade')->name('dimensao-unidade');
+
     # Redmine issue 173
     Route::get('estagios/dtExercicio/{dtExercicio}', 'PessoaController@listarEstagios');
     Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');

@@ -164,6 +164,17 @@ class PessoaController extends Controller
     }
 
     /**
+     * @feature 32
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaDimensaoUnidade()
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaDimensaoUnidade();
+    }
+
+    /**
      * @feature 12
      * @param $tpDocumento
      * @param $dtInicio

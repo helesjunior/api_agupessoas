@@ -750,6 +750,74 @@ FROM (
     }
 
     /**
+     * Retorna Listagem contendo dados para o Dimensão Unidade
+     * @feature 32
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaDimensaoUnidade()
+    {
+        ini_set("memory_limit", "512M");
+        try {
+
+            DB::beginTransaction();
+            $sql = DB::select("SELECT LOTACAO.ID_LOTACAO,
+                                            LOTACAO.CD_LOTACAO,
+                                            LOTACAO.SG_LOTACAO,
+                                            LOTACAO.DS_LOTACAO,
+                                            LOTACAO.CD_UORG,
+                                            LOTACAO.IN_ATIVO,
+                                            LOTACAO.DT_CRIACAO_LOTACAO,
+                                            LOTACAO.DT_EXTINCAO_LOTACAO,
+                                            LOTACAO.NM_EMAIL_LOTACAO,
+                                            LOTACAO.DT_OPERACAO_INCLUSAO,
+                                            LOTACAO.DT_OPERACAO_ALTERACAO,
+                                            LOTACAO.NR_CPF_OPERADOR,
+                                            LOTACAO.DT_OPERACAO_EXCLUSAO,
+                                            LOTACAO.ID_LOTACAO             AS                                              T1ID_LOTACAO,
+                                            LOTACAO.ID_LOTACAO_PAI         AS                                              T1ID_LOTACAO_PAI,
+                                            LOTACAO.SG_LOTACAO             AS                                              T1SG_LOTACAO_PAI,
+                                            LOTACAO.ID_SERVIDOR_TITULAR    AS                                              T1ID_SERVIDOR_TITULAR,
+                                            LOTACAO.ID_SERVIDOR_SUBSTITUTO AS                                              T1ID_SERVIDOR_SUBSTITUTO,
+                                            LOTACAO.ID_TELEFONE            AS                                              T1ID_TELEFONE,
+                                            LOTACAO.ID_ENDERECO            AS                                              T1ID_ENDERECO,
+                                            LOTACAO.ID_TIPO_LOTACAO        AS                                              T1ID_TIPO_LOTACAO,
+                                            LOTACAO.CD_LOTACAO             AS                                              T1CD_LOTACAO,
+                                            LOTACAO.SG_LOTACAO             AS                                              T1SG_LOTACAO,
+                                            LOTACAO.DS_LOTACAO             AS                                              T1DS_LOTACAO,
+                                            LOTACAO.DT_CRIACAO_LOTACAO     AS                                              T1DT_CRIACAO_LOTACAO,
+                                            LOTACAO.DT_EXTINCAO_LOTACAO    AS                                              T1DT_EXTINCAO_LOTACAO,
+                                            LOTACAO.NM_EMAIL_LOTACAO       AS                                              T1NM_EMAIL_LOTACAO,
+                                            SERVIDOR.ID_SERVIDOR           AS                                              T2ID_SERVIDOR,
+                                            S.ID_SERVIDOR                  AS                                              T3ID_SERVIDOR,
+                                            TIPO_LOTACAO.ID_TIPO_LOTACAO   AS                                              T6ID_TIPO_LOTACAO,
+                                            TIPO_LOTACAO.CD_TIPO_LOTACAO   AS                                              T6CD_TIPO_LOTACAO,
+                                            TIPO_LOTACAO.DS_TIPO_LOTACAO   AS                                              T6DS_TIPO_LOTACAO,
+                                            LOT.ID_LOTACAO                 AS                                              T7ID_LOTACAO_PAI,
+                                            LOT.CD_LOTACAO                 AS                                              T7CD_LOTACAO_PAI,
+                                            LOT.SG_LOTACAO                 AS                                              T7SG_LOTACAO_PAI,
+                                            LOT.DS_LOTACAO                 AS                                              T7DS_LOTACAO_PAI,
+                                            1                              AS                                              NADA
+                                     FROM AGU_RH.LOTACAO,
+                                          AGU_RH.LOTACAO LOT,
+                                          AGU_RH.SERVIDOR,
+                                          AGU_RH.SERVIDOR S,
+                                          AGU_RH.TIPO_LOTACAO
+                                     WHERE LOTACAO.DT_OPERACAO_EXCLUSAO IS NULL
+                                       AND LOT.ID_LOTACAO (+) = AGU_RH.LOTACAO.ID_LOTACAO_PAI
+                                       AND AGU_RH.SERVIDOR.ID_SERVIDOR (+) = AGU_RH.LOTACAO.ID_SERVIDOR_TITULAR
+                                       AND S.ID_SERVIDOR (+) = AGU_RH.LOTACAO.ID_SERVIDOR_SUBSTITUTO
+                                       AND AGU_RH.TIPO_LOTACAO.ID_TIPO_LOTACAO (+) = AGU_RH.LOTACAO.ID_TIPO_LOTACAO
+                                       AND LOTACAO.ID_RH = 1");
+            DB::commit();
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
      * Retorna Listagem contendo dados para o controle estrutura
      * @feature 12
      * @return array
