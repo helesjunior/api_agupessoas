@@ -142,7 +142,7 @@ class PessoaController extends Controller
     }
 
     /**
-     * @feature 173
+     * @feature 178
      * @return array|string[]
      * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
      */
@@ -150,6 +150,17 @@ class PessoaController extends Controller
     {
         $modelo = new Pessoa();
         return $modelo->retornaIngresso();
+    }
+
+    /**
+     * @feature 179
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaRescisao()
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaRescisao();
     }
 
     /**

@@ -689,7 +689,7 @@ FROM (
     }
 
     /**
-     * Retorna Listagem contendo dados para o F-Ingresso
+     * Retorna Listagem contendo dados para o 4.F - Ingresso
      * @feature 178
      * @return array
      * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
@@ -711,6 +711,36 @@ FROM (
                                          VW_REL_DADOFUNCIONAL
                                     WHERE VW_REL_CARGOEFETIVO.ID_SERVIDOR (+) = VW_REL_DADOFUNCIONAL.ID_SERVIDOR
                                       AND VW_REL_DADOFUNCIONAL.id_rh = 1");
+            DB::commit();
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o 5.F - Rescisao
+     * @feature 179
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaRescisao()
+    {
+        ini_set("memory_limit", "512M");
+        try {
+
+            DB::beginTransaction();
+            $sql = DB::select("SELECT VW_REL_CARGOEFETIVO.DESCRICAO_CARGO   AS \"descricao_do_cargo\",
+                                             VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA AS \"matricula_sIAPE\",
+                                             VW_REL_DADOFUNCIONAL.NOME_SERVIDOR    AS \"nome_do_servidor\",
+                                             TO_CHAR(VW_REL_DADOFUNCIONAL.DATA_RESCISAO, 'DD/MM/YYYY') AS \"data_rescisao\",
+                                             VW_REL_DADOFUNCIONAL.RESCICAO_RAIS    AS \"rais_rescisao_descricao\",
+                                             VW_REL_CARGOEFETIVO.ANO_CONCURSO      AS \"concurso_ano\"
+                                     FROM VW_REL_CARGOEFETIVO, VW_REL_DADOFUNCIONAL
+                                     WHERE VW_REL_CARGOEFETIVO.ID_SERVIDOR (+) = VW_REL_DADOFUNCIONAL.ID_SERVIDOR
+                                     AND (VW_REL_DADOFUNCIONAL.DATA_RESCISAO IS NOT NULL)
+                                     AND VW_REL_DADOFUNCIONAL.id_rh = 1");
             DB::commit();
 
             return $sql;
