@@ -426,7 +426,7 @@ class Pessoa extends Base
                 DB::raw('SYSDATE as consultado_em')
             )
             ->where('DOCUMENTACAO.NR_DOCUMENTACAO', $cpf)
-            ->whereIn('CD_CARGO_RH', [410001, 410004, 'R410004', 414001, 414017, 'R414017', 408001, 408002, 'R408001', 'R408002'])
+            ->whereIn('CD_CARGO_RH', ['410001', '410004', 'R410004', '414001', '414017', 'R414017', '408001', '408002', 'R408001', 'R408002'])
             ->first();
 
         return $result ? $result :  "CPF não Consta na Base de Dados da AGU.";
