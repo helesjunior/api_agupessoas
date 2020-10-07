@@ -444,6 +444,9 @@ FROM (
     public function retornaAfastamentoServidor($tpDocumento, $dtInicio)
     {
 
+        ini_set("memory_limit", "512M");
+
+
         if (!is_numeric($tpDocumento)) {
             return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
         }
@@ -457,7 +460,7 @@ FROM (
         try {
 
             $sql = DB::select('
-            SELECT "NOME DO SERVIDOR"
+            SELECT distinct "NOME DO SERVIDOR"
                  , CARGO
                  , CPF
                  , SEXO
@@ -478,8 +481,8 @@ FROM (
                  , DT_INICIO_MOVIMENTACAO
                  , "SITUACAO FUNCIONAL"
                  , "ORGAO DE ORIGEM"
-            
-            
+
+
             from (SELECT SER.NM_SERVIDOR                                                      AS "NOME DO SERVIDOR",
                          CA.DS_CARGO_RH                                                       AS CARGO,
                          DOC.NR_DOCUMENTACAO                                                  AS CPF,
@@ -494,10 +497,10 @@ FROM (
                          MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
                           ,
                          MOV.DT_INICIO_MOVIMENTACAO,
-            
+
                          SER.CD_SEXO                                                          AS SEXO,
                          LOT1.CD_LOTACAO                                                      AS "CODIGO UNIDADE EXERCICIO",
-            
+
                          UF.SG_UF                                                             AS UF,
                          MU.NM_MUNICIPIO || \' - \' || UF.SG_UF                                 AS "CIDADE DA UNIDADE",
                          NI.DS_NIVEL                                                          AS "NIVEL",
@@ -505,8 +508,8 @@ FROM (
                          TS.DS_TIPO_SERVIDOR                                                  AS "SITUACAO FUNCIONAL",
                          TRUNC(MONTHS_BETWEEN(A.DT_FIM_AFASTAMENTO, SER.DT_NASCIMENTO) / 12)  AS IDADE,
                          LT.SG_ORGAO                                                          AS "ORGAO DE ORIGEM"
-            
-            
+
+
                   FROM AGU_RH.SERVIDOR SER
                            LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
                            LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON
@@ -560,6 +563,9 @@ FROM (
 
     public function retornaAfastamentoUnidade($tpDocumento, $dtInicio)
     {
+
+        ini_set("memory_limit", "512M");
+
 
         if (!is_numeric($tpDocumento)) {
             return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
@@ -700,13 +706,13 @@ FROM (
         try {
 
             DB::beginTransaction();
-            $sql = DB::select("SELECT distinct VW_REL_DADOFUNCIONAL.DATA_INGRESSO    AS \"Data Ingresso\",
-                                           VW_REL_CARGOEFETIVO.DESCRICAO_CARGO   AS \"Descricao do Cargo\",
-                                           VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA AS \"Matricula SIAPE\",
-                                           VW_REL_DADOFUNCIONAL.NOME_SERVIDOR    AS \"Nome do Servidor\",
-                                           VW_REL_DADOFUNCIONAL.DESC_TIPO_ADM    AS \"Tipo Admissao - Descr.\",
-                                           VW_REL_CARGOEFETIVO.ANO_CONCURSO      AS \"Concurso - Ano\",
-                                           VW_REL_DADOFUNCIONAL.VINCULO_RAIS     AS \"Rais Vinculo - Descr.\"
+            $sql = DB::select("SELECT distinct VW_REL_DADOFUNCIONAL.DATA_INGRESSO AS \"Data Ingresso\",
+                                           TRIM(VW_REL_CARGOEFETIVO.DESCRICAO_CARGO)    AS \"Descricao do Cargo\",
+                                           VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA        AS \"Matricula SIAPE\",
+                                           VW_REL_DADOFUNCIONAL.NOME_SERVIDOR           AS \"Nome do Servidor\",
+                                           VW_REL_DADOFUNCIONAL.DESC_TIPO_ADM           AS \"Tipo Admissao - Descr.\",
+                                           VW_REL_CARGOEFETIVO.ANO_CONCURSO             AS \"Concurso - Ano\",
+                                           VW_REL_DADOFUNCIONAL.VINCULO_RAIS            AS \"Rais Vinculo - Descr.\"
                                     FROM VW_REL_CARGOEFETIVO,
                                          VW_REL_DADOFUNCIONAL
                                     WHERE VW_REL_CARGOEFETIVO.ID_SERVIDOR (+) = VW_REL_DADOFUNCIONAL.ID_SERVIDOR
@@ -733,7 +739,7 @@ FROM (
             DB::beginTransaction();
             $sql = DB::select("SELECT distinct VW_REL_CARGOEFETIVO.DESCRICAO_CARGO   AS \"descricao_do_cargo\",
                                            VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA AS \"matricula_sIAPE\",
-                                           VW_REL_DADOFUNCIONAL.NOME_SERVIDOR    AS \"nome_do_servidor\",
+                                           TRIM(VW_REL_DADOFUNCIONAL.NOME_SERVIDOR)    AS \"nome_do_servidor\",
                                            TO_CHAR(VW_REL_DADOFUNCIONAL.DATA_RESCISAO, 'DD/MM/YYYY') AS \"data_rescisao\",
                                            VW_REL_DADOFUNCIONAL.RESCICAO_RAIS    AS \"rais_rescisao_descricao\",
                                            VW_REL_CARGOEFETIVO.ANO_CONCURSO      AS \"concurso_ano\"
@@ -765,14 +771,14 @@ FROM (
                                         SELECT
                                                LOTACAO.ID_LOTACAO_PAI,
                                                PAI.SG_LOTACAO as DS_LOTACAO_PAI,
-                                        
+
                                                LOTACAO.CD_LOTACAO,
                                                LOTACAO.SG_LOTACAO,
                                                LOTACAO.CD_SIORG,
-                                        
+
                                                LOTACAO.DS_LOTACAO,
                                                PAI.DS_LOTACAO AS DS_LOTACAO_PAI,
-                                        
+
                                                CASE
                                                    WHEN LOTACAO.IN_ATIVO = 0
                                                        THEN 'SIM'
@@ -782,15 +788,15 @@ FROM (
                                                TO_CHAR(LOTACAO.DT_CRIACAO_LOTACAO, 'DD/MM/YYYY') AS DT_CRIACAO_LOTACAO,
                                                TO_CHAR(LOTACAO.DT_EXTINCAO_LOTACAO, 'DD/MM/YYYY') AS DT_EXTINCAO_LOTACAO,
                                                TIPO_LOTACAO.DS_TIPO_LOTACAO,
-                                        
+
                                                LOTACAO.ID_SERVIDOR_TITULAR,
                                                AGU_RH.SERVIDOR.NM_SERVIDOR,
                                                S.ID_SERVIDOR,
                                                S.NM_SERVIDOR,
-                                        
+
                                                TELEFONE.NR_DDD  AS DDD,
                                                TELEFONE.NR_TELEFONE AS TELEFONE,
-                                        
+
                                                MUNICIPIO.NM_MUNICIPIO AS MUNICIPIO,
                                                ENDERECO.DS_ENDERECO AS ENDERECO,
                                                ENDERECO.NM_BAIRRO  AS BAIRRO,
@@ -798,7 +804,7 @@ FROM (
                                                ENDERECO.DS_COMPLEMENTO  AS COMPLEMENTO,
                                                UF.SG_UF AS UF,
                                                LOTACAO.NM_EMAIL_LOTACAO
-                                        
+
                                         FROM AGU_RH.LOTACAO,
                                              AGU_RH.LOTACAO LOT,
                                              AGU_RH.SERVIDOR,
@@ -809,7 +815,7 @@ FROM (
                                              AGU_RH.ENDERECO,
                                              AGU_RH.MUNICIPIO,
                                              AGU_RH.UF
-                                        
+
                                         WHERE LOTACAO.DT_OPERACAO_EXCLUSAO IS NULL
                                           AND LOT.ID_LOTACAO (+) = AGU_RH.LOTACAO.ID_LOTACAO_PAI
                                           AND AGU_RH.SERVIDOR.ID_SERVIDOR (+) = AGU_RH.LOTACAO.ID_SERVIDOR_TITULAR
