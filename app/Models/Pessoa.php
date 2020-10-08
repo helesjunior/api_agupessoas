@@ -460,7 +460,7 @@ FROM (
         try {
 
             $sql = DB::select('
-            SELECT distinct "NOME DO SERVIDOR"
+            SELECT "NOME DO SERVIDOR"
                  , CARGO
                  , CPF
                  , SEXO
@@ -483,7 +483,7 @@ FROM (
                  , "ORGAO DE ORIGEM"
 
 
-            from (SELECT SER.NM_SERVIDOR                                                      AS "NOME DO SERVIDOR",
+            from (SELECT distinct SER.NM_SERVIDOR                                                      AS "NOME DO SERVIDOR",
                          CA.DS_CARGO_RH                                                       AS CARGO,
                          DOC.NR_DOCUMENTACAO                                                  AS CPF,
                          DF.CD_MATRICULA_SIAPE                                                AS SIAPE,
@@ -508,8 +508,6 @@ FROM (
                          TS.DS_TIPO_SERVIDOR                                                  AS "SITUACAO FUNCIONAL",
                          TRUNC(MONTHS_BETWEEN(A.DT_FIM_AFASTAMENTO, SER.DT_NASCIMENTO) / 12)  AS IDADE,
                          LT.SG_ORGAO                                                          AS "ORGAO DE ORIGEM"
-
-
                   FROM AGU_RH.SERVIDOR SER
                            LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
                            LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON
@@ -737,9 +735,9 @@ FROM (
         try {
 
             DB::beginTransaction();
-            $sql = DB::select("SELECT distinct VW_REL_CARGOEFETIVO.DESCRICAO_CARGO   AS \"descricao_do_cargo\",
+            $sql = DB::select("SELECT distinct TRIM(VW_REL_CARGOEFETIVO.DESCRICAO_CARGO)   AS \"descricao_do_cargo\",
                                            VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA AS \"matricula_sIAPE\",
-                                           TRIM(VW_REL_DADOFUNCIONAL.NOME_SERVIDOR)    AS \"nome_do_servidor\",
+                                           VW_REL_DADOFUNCIONAL.NOME_SERVIDOR    AS \"nome_do_servidor\",
                                            TO_CHAR(VW_REL_DADOFUNCIONAL.DATA_RESCISAO, 'DD/MM/YYYY') AS \"data_rescisao\",
                                            VW_REL_DADOFUNCIONAL.RESCICAO_RAIS    AS \"rais_rescisao_descricao\",
                                            VW_REL_CARGOEFETIVO.ANO_CONCURSO      AS \"concurso_ano\"
