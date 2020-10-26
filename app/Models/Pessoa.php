@@ -787,16 +787,69 @@ FROM (
         try {
 
             DB::beginTransaction();
-            $sql = DB::select("SELECT distinct TRIM(VW_REL_CARGOEFETIVO.DESCRICAO_CARGO)   AS \"descricao_do_cargo\",
-                                           VW_REL_DADOFUNCIONAL.CODIGO_MATRICULA AS \"matricula_sIAPE\",
-                                           VW_REL_DADOFUNCIONAL.NOME_SERVIDOR    AS \"nome_do_servidor\",
-                                           TO_CHAR(VW_REL_DADOFUNCIONAL.DATA_RESCISAO, 'DD/MM/YYYY') AS \"data_rescisao\",
-                                           VW_REL_DADOFUNCIONAL.RESCICAO_RAIS    AS \"rais_rescisao_descricao\",
-                                           VW_REL_CARGOEFETIVO.ANO_CONCURSO      AS \"concurso_ano\"
-                                    FROM VW_REL_CARGOEFETIVO, VW_REL_DADOFUNCIONAL
-                                    WHERE VW_REL_CARGOEFETIVO.ID_SERVIDOR (+) = VW_REL_DADOFUNCIONAL.ID_SERVIDOR
-                                      AND (VW_REL_DADOFUNCIONAL.DATA_RESCISAO IS NOT NULL)
-                                      AND VW_REL_DADOFUNCIONAL.id_rh = 1");
+            $sql = DB::select("WITH dados as (
+                                    SELECT  distinct TRIM(CAR.DESCRICAO_CARGO)   AS \"descricao_do_cargo\",
+                                                     DAD.CODIGO_MATRICULA AS \"matricula_sIAPE\",
+                                                     DAD.NOME_SERVIDOR    AS \"nome_do_servidor\",
+                                                     TO_CHAR(DAD.DATA_RESCISAO, 'DD/MM/YYYY') AS \"data_rescisao\",
+                                                     DAD.RESCICAO_RAIS    AS \"rais_rescisao_descricao\",
+                                                     CAR.ANO_CONCURSO      AS \"concurso_ano\",
+                                                     SER.DT_NASCIMENTO,
+                                                     CASE SER.CD_SEXO
+                                                         WHEN 'M' THEN 'Masculino'
+                                                         ELSE 'Feminino'
+                                                         END,
+                                                     SER.NR_CPF_OPERADOR,
+                                                     MOV.ID_SERVIDOR,
+                                                     LOT.CD_LOTACAO                       AS \"CODIGO UNIDADE EXERCICIO\",
+                                                     UF.SG_UF                             AS UF,
+                                                     MU.NM_MUNICIPIO || ' - ' || UF.SG_UF AS \"CIDADE DA UNIDADE\",
+                                                     NI.DS_NIVEL                          AS \"NIVEL\",
+                                                     RJ.DS_REGIME_JURIDICO                AS \"REGIME JURIDICO\",
+                                                     TS.DS_TIPO_SERVIDOR                  AS \"SITUACAO FUNCIONAL\",
+                                                     LT.SG_ORGAO                          AS \"ORGAO DE ORIGEM\"
+                                    FROM VW_REL_CARGOEFETIVO CAR
+                                             RIGHT JOIN VW_REL_DADOFUNCIONAL DAD ON DAD.ID_SERVIDOR = CAR.ID_SERVIDOR
+                                             LEFT JOIN AGU_RH.SERVIDOR SER ON SER.ID_SERVIDOR = CAR.ID_SERVIDOR
+                                             LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
+                                             LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON RJ.ID_REGIME_JURIDICO = CES.ID_REGIME_JURIDICO_DESTINO
+                                             LEFT JOIN AGU_RH.TIPO_SERVIDOR TS ON SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR
+                                             LEFT JOIN (
+                                        SELECT U.ID_SERVIDOR, U.ULTIMA, U.ID_LOTACAO_EXERCICIO
+                                        FROM (
+                                                 SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR, ID_LOTACAO_EXERCICIO
+                                                 FROM MOVIMENTACAO
+                                                 GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO
+                                             ) U
+                                                 LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                                                 LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                                    )
+                                        MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                                             LEFT JOIN AGU_RH.LOTACAO LOT ON LOT.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                                             LEFT JOIN AGU_RH.ENDERECO EN ON EN.ID_ENDERECO = LOT.ID_ENDERECO
+                                             LEFT JOIN AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
+                                             LEFT JOIN AGU_RH.UF UF ON MU.ID_UF = UF.ID_UF
+                                             JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                                             JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                                             LEFT JOIN NIVEL NI ON CA.ID_NIVEL = NI.ID_NIVEL
+                                             left JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                                             JOIN ( SELECT U.ID_SERVIDOR, O.SG_ORGAO
+                                                    FROM ( SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                                                           FROM MOVIMENTACAO
+                                                           GROUP BY ID_SERVIDOR
+                                                         ) U
+                                                             LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                                                             LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO ) LT ON LT.ID_SERVIDOR = SER.ID_SERVIDOR
+                                    WHERE (DAD.DATA_RESCISAO IS NOT NULL)
+                                      AND DAD.id_rh = 1
+                                ),
+                                     afast as (
+                                         SELECT ID_SERVIDOR,MAX(DT_FIM_AFASTAMENTO) as DT_FIM_AFASTAMENTO FROM AGU_RH.AFASTAMENTO group by ID_SERVIDOR
+                                     )
+                                select distinct
+                                    TRUNC(MONTHS_BETWEEN(afast.DT_FIM_AFASTAMENTO, dados.DT_NASCIMENTO) / 12)  AS IDADE,
+                                    dados.*
+                                from dados left join afast on afast.ID_SERVIDOR = dados.ID_SERVIDOR");
             DB::commit();
 
             return $sql;
