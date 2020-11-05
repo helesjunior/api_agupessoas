@@ -245,7 +245,7 @@ class Pessoa extends Base
                 CASE SER.CD_SEXO
                     WHEN 'M' THEN 'Masculino'
                     ELSE 'Feminino'
-                    END,
+                    END as CD_SEXO,
                 TO_CHAR(SER.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO
         ,
                 MOV.ID_LOTACAO_EXERCICIO                 AS \"Cod. Lotacao Exercicio\"
@@ -800,7 +800,7 @@ FROM (
                                          CASE SER.CD_SEXO
                                              WHEN 'M' THEN 'Masculino'
                                              ELSE 'Feminino'
-                                         END,
+                                         END as CD_SEXO,
                                          LOT.CD_LOTACAO           AS \"CODIGO UNIDADE EXERCICIO\",
                                          UF.SG_UF                                                             AS UF,
                                          MU.NM_MUNICIPIO || ' - ' || UF.SG_UF                                 AS \"CIDADE DA UNIDADE\",
@@ -882,7 +882,7 @@ FROM (
                                                      CASE SER.CD_SEXO
                                                          WHEN 'M' THEN 'Masculino'
                                                          ELSE 'Feminino'
-                                                         END,
+                                                         END as CD_SEXO,
                                                      SER.NR_CPF_OPERADOR,
                                                      MOV.ID_SERVIDOR,
                                                      LOT.CD_LOTACAO                       AS \"CODIGO UNIDADE EXERCICIO\",
