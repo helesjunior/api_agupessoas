@@ -952,41 +952,45 @@ FROM (
             DB::beginTransaction();
             $sql = DB::select("
                                         SELECT
-                                               LOTACAO.ID_LOTACAO_PAI,
-                                               PAI.SG_LOTACAO as DS_LOTACAO_PAI,
+                                            LOTACAO.ID_LOTACAO_PAI,
+                                            PAI.SG_LOTACAO as DS_LOTACAO_PAI,
 
-                                               LOTACAO.CD_LOTACAO,
-                                               LOTACAO.SG_LOTACAO,
-                                               LOTACAO.CD_SIORG,
+                                            LOTACAO.CD_LOTACAO,
+                                            LOTACAO.SG_LOTACAO,
+                                            LOTACAO.CD_SIORG,
 
-                                               LOTACAO.DS_LOTACAO,
-                                               PAI.DS_LOTACAO AS DS_LOTACAO_PAI,
+                                            LOTACAO.DS_LOTACAO,
+                                            PAI.DS_LOTACAO AS DS_LOTACAO_PAI,
 
-                                               CASE
-                                                   WHEN LOTACAO.IN_ATIVO = 0
-                                                       THEN 'SIM'
-                                                   ELSE 'NÃO'
-                                               END  AS ATIVO,
-                                               LOTACAO.CD_UORG,
-                                               TO_CHAR(LOTACAO.DT_CRIACAO_LOTACAO, 'DD/MM/YYYY') AS DT_CRIACAO_LOTACAO,
-                                               TO_CHAR(LOTACAO.DT_EXTINCAO_LOTACAO, 'DD/MM/YYYY') AS DT_EXTINCAO_LOTACAO,
-                                               TIPO_LOTACAO.DS_TIPO_LOTACAO,
+                                            CASE
+                                                WHEN LOTACAO.IN_ATIVO = 0
+                                                    THEN 'SIM'
+                                                ELSE 'NÃO'
+                                                END  AS ATIVO,
+                                            LOTACAO.CD_UORG,
+                                            TO_CHAR(LOTACAO.DT_CRIACAO_LOTACAO, 'DD/MM/YYYY') AS DT_CRIACAO_LOTACAO,
+                                            TO_CHAR(LOTACAO.DT_EXTINCAO_LOTACAO, 'DD/MM/YYYY') AS DT_EXTINCAO_LOTACAO,
+                                            TIPO_LOTACAO.DS_TIPO_LOTACAO,
 
-                                               LOTACAO.ID_SERVIDOR_TITULAR,
-                                               AGU_RH.SERVIDOR.NM_SERVIDOR,
-                                               S.ID_SERVIDOR,
-                                               S.NM_SERVIDOR,
+                                            LOTACAO.ID_SERVIDOR_TITULAR,
+                                            AGU_RH.SERVIDOR.NM_SERVIDOR,
+                                            S.ID_SERVIDOR,
+                                            S.NM_SERVIDOR,
 
-                                               TELEFONE.NR_DDD  AS DDD,
-                                               TELEFONE.NR_TELEFONE AS TELEFONE,
+                                            TELEFONE.NR_DDD  AS DDD,
+                                            TELEFONE.NR_TELEFONE AS TELEFONE,
 
-                                               MUNICIPIO.NM_MUNICIPIO AS MUNICIPIO,
-                                               ENDERECO.DS_ENDERECO AS ENDERECO,
-                                               ENDERECO.NM_BAIRRO  AS BAIRRO,
-                                               ENDERECO.NR_CEP  AS CEP,
-                                               ENDERECO.DS_COMPLEMENTO  AS COMPLEMENTO,
-                                               UF.SG_UF AS UF,
-                                               LOTACAO.NM_EMAIL_LOTACAO
+                                            MUNICIPIO.NM_MUNICIPIO AS MUNICIPIO,
+                                            ENDERECO.DS_ENDERECO AS ENDERECO,
+                                            ENDERECO.NM_BAIRRO  AS BAIRRO,
+                                            ENDERECO.NR_CEP  AS CEP,
+                                            ENDERECO.DS_COMPLEMENTO  AS COMPLEMENTO,
+                                            UF.SG_UF AS UF,
+                                            LOTACAO.NM_EMAIL_LOTACAO,
+                                            TO_CHAR(LOTACAO.DT_INICIO_UDP, 'DD/MM/YYYY') AS DT_INICIO_UDP,
+                                            TO_CHAR(LOTACAO.DT_EXPIRACAO_UDP, 'DD/MM/YYYY') AS DT_EXPIRACAO_UDP,
+                                            LOTACAO.IN_TIPO_NORMA_UDP,
+                                            LOTACAO.IN_TIPO_NORMA_ODS
 
                                         FROM AGU_RH.LOTACAO,
                                              AGU_RH.LOTACAO LOT,
