@@ -611,13 +611,13 @@ FROM (
                            LEFT JOIN AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
                            LEFT JOIN AGU_RH.UF UF ON
                       MU.ID_UF = UF.ID_UF
-                           LEFT JOIN (
+                           JOIN (
                       SELECT U.ID_SERVIDOR,
-                             O.SG_ORGAO
-                      FROM (
-                               SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
-                               FROM MOVIMENTACAO
-                               GROUP BY ID_SERVIDOR
+                                        O.DS_ORGAO || \' - \' || O.SG_ORGAO AS SG_ORGAO
+                                        FROM (
+                                        SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                                        FROM MOVIMENTACAO
+                                        GROUP BY ID_SERVIDOR
                            ) U
                                LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
                                LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
@@ -755,12 +755,7 @@ FROM (
                                                MOV.SIGLA_LOT_EXER,
                                                MOV.IDP_EXER,
                                                TO_CHAR(MOV.DATA_INICIO, 'DD/MM/YYYY'),
-                                               CASE
-                                                   WHEN MOV.DATA_FINAL IS NULL THEN
-                                                           TO_CHAR(SYSDATE, 'DD/MM/YYYY') || ' - Data atual'
-                                                   ELSE
-                                                       TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY')
-                                                   END       as DATA_FINAL,
+                                               TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY'),
                                                MOV.NOME_SERVIDOR,
                                                MOV.DESCRICAO_MUNICIPIO_LOT_EXER,
                                                MOV.SIGLA_UF_LOT_EXER
