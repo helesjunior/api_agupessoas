@@ -41,6 +41,8 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('provimentos', 'PessoaController@listarProvimentos');
     Route::get('requisicoes', 'PessoaController@listarRequisicoes');
     Route::get('vacancias', 'PessoaController@listarVacancias');
+
+    Route::get('relatorio-covid', 'PessoaController@gerarRelatorioCovidTxt');
 });
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {

@@ -74,11 +74,15 @@ class PessoaController extends Controller
     {
         $modelo = new Pessoa();
          return json_encode($modelo->retornaConectaTCU($cpf));
-
-
-
-
     }
+
+    public function gerarRelatorioCovidTxt()
+    {
+        $modelo = new Pessoa();
+        return json_encode($modelo->gerarRelatorioCovidTxt());
+    }
+
+
 
     /**
      * Valida parâmetros informados na requisição para exibição ou não dos dados
