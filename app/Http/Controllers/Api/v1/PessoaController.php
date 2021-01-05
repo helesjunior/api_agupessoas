@@ -103,10 +103,10 @@ class PessoaController extends Controller
      * @param $dtExercicio
      * @return array
      */
-    public function listarApuracaoAntiguidade($dtExercicio, $tipoCargo)
+    public function listarApuracaoAntiguidade(Request $request)
     {
         $model = new Pessoa();
-        return $model->retornaApuracaoAntiguidade($dtExercicio, $tipoCargo);
+        return $model->retornaApuracaoAntiguidade($request->all());
     }
 
     public function buscaServidorTcu($cpf)

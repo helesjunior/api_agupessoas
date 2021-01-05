@@ -47,7 +47,7 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');
 
     #Apuracao Antiguidade
-    Route::get('apuracao-antiguidade/dataExercicio/{dtExercicio}/tipoCargo/{tipoCargo}', 'PessoaController@listarApuracaoAntiguidade')->name('apuracao-antiguidade');
+    Route::get('apuracao-antiguidade', 'PessoaController@listarApuracaoAntiguidade')->name('apuracao-antiguidade');
 
 });
 
