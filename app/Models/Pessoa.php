@@ -399,8 +399,16 @@ class Pessoa extends Base
      * @param $request['tipoCargo']
      * @return mixed
      */
-    public function retornaApuracaoAntiguidade($request)
+    public function retornaApuracaoAntiguidade(Request $request)
     {
+
+        $validator = \Validator::make($request->all(), [
+            'dataExercicio' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return 'Data inválida, favor verificar o formato.';
+        }
 
         try {
             if(isset($request['dataExercicio'])) {

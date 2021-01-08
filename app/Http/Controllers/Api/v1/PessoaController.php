@@ -106,7 +106,7 @@ class PessoaController extends Controller
     public function listarApuracaoAntiguidade(Request $request)
     {
         $model = new Pessoa();
-        return $model->retornaApuracaoAntiguidade($request->all());
+        return $model->retornaApuracaoAntiguidade($request);
     }
 
     public function buscaServidorTcu($cpf)
