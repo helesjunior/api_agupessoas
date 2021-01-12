@@ -460,7 +460,7 @@ class Pessoa extends Base
                    SERVIDOR.DS_TIPO_PROVIMENTO AS \"DESCRICAO PROVIMENTO\",
 
                    SERVIDOR.ID_SERVIDOR
-            FROM (SELECT S.CD_SERVIDOR,
+            FROM (SELECT DISTINCT S.CD_SERVIDOR,
                 S.NM_SERVIDOR,
                 S.ID_SERVIDOR,
                 C.CD_CARGO_RH,
