@@ -232,32 +232,31 @@ class Pessoa extends Base
         try {
 
             DB::beginTransaction();
-            $sql = DB::select("SELECT DISTINCT C.DS_CARGO_RH                   AS \"DESCRICAO DO CARGO\",
+            $sql = DB::select("SELECT DISTINCT TRIM(C.DS_CARGO_RH)                            AS \"DESCRICAO DO CARGO\",
                 VW_DF.COD_MATRICULA_SIAPE                AS \"MATRICULA SIAPE\",
-                VW_DF.NOME_SERVIDOR                      AS \"NOME DO SERVIDOR\",
+                TRIM(VW_DF.NOME_SERVIDOR)                      AS \"NOME DO SERVIDOR\",
                 SER.NR_CPF_OPERADOR,
                 TO_CHAR(V.DT_VACANCIA, 'DD/MM/YYYY')     AS \"VACANCIA - DATA\",
-                TV.DS_TIPO_VACANCIA                      AS \"VACANCIA - TIPO\",
+                TRIM(TV.DS_TIPO_VACANCIA)                AS \"VACANCIA - TIPO\",
                 CGO.NR_ANO_CONCURSO                      AS \"ANO CONCURSO\",
                 DOC.NR_DOCUMENTACAO                      AS CPF,
                 TO_CHAR(SER.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO,
-                MOV.CD_LOTACAO                           AS \"COD. LOTACAO EXERCICIO\",
-                MOV.DS_LOTACAO                           AS \"LOTACAO EXERCICIO\",
-                LOT.DS_LOTACAO,
+                TRIM(MOV.CD_LOTACAO)                     AS \"COD. LOTACAO EXERCICIO\",
+                TRIM(MOV.DS_LOTACAO)                     AS \"LOTACAO EXERCICIO\",
+                TRIM(LOT.DS_LOTACAO)                     AS \"DESCRICAO LOTACAO\",
                 CASE SER.CD_SEXO
                     WHEN 'M' THEN 'MASCULINO'
                     ELSE 'FEMININO'
-                    END AS CD_SEXO,
+                END AS CD_SEXO,
                 TO_CHAR(SER.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO
         ,LOT.CD_LOTACAO                                  AS \"CODIGO UNIDADE EXERCICIO\"
         ,UF.SG_UF                                        AS UF
         ,MU.NM_MUNICIPIO || ' - ' || UF.SG_UF            AS \"CIDADE DA UNIDADE\"
         ,NI.DS_NIVEL                                     AS \"NIVEL\"
         ,RJ.DS_REGIME_JURIDICO                           AS \"REGIME JURIDICO\"
-        ,TS.DS_TIPO_SERVIDOR                             AS \"SITUACAO FUNCIONAL\"
-        ,LT.SG_ORGAO                                     AS \"ORGAO DE ORIGEM\"
+        ,TRIM(TS.DS_TIPO_SERVIDOR)                             AS \"SITUACAO FUNCIONAL\"
+        ,TRIM(LT.SG_ORGAO)                                     AS \"ORGAO DE ORIGEM\"
         ,VW.DESCRICAO_TIPO_PROVIMENTO
-        ,CAR.DESCRICAO_CARGO
 FROM AGU_RH.VACANCIA V
          -- LEFT JOIN PROVIMENTO PRO ON PRO.ID_PROVIMENTO = V.ID_PROVIMENTO
          -- LEFT JOIN VW_REL_PROVIMENTO VW ON VW.ID_TIPO_PROVIMENTO = PRO.ID_TIPO_PROVIMENTO
@@ -335,8 +334,8 @@ FROM AGU_RH.VACANCIA V
                      FROM MOVIMENTACAO
                      GROUP BY ID_SERVIDOR
                     ) U
-               LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
-               LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                        LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                        LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
 ) LT ON
         LT.ID_SERVIDOR = SER.ID_SERVIDOR
 
@@ -344,7 +343,8 @@ WHERE V.DT_OPERACAO_EXCLUSAO IS NULL
   AND P.DT_OPERACAO_EXCLUSAO IS NULL
   AND CGO.DT_OPERACAO_EXCLUSAO IS NULL
   AND C.DT_OPERACAO_EXCLUSAO IS NULL
-  AND DT_VACANCIA IS NOT NULL");
+  AND DT_VACANCIA IS NOT NULL
+");
             DB::commit();
 
             return $sql;
@@ -551,7 +551,7 @@ FROM (
         try {
 
             $sql = DB::select('
-            SELECT "NOME DO SERVIDOR"
+            SELECT DISTINCT "NOME DO SERVIDOR"
                  , CARGO
                  , CPF
                  , SEXO
@@ -572,10 +572,8 @@ FROM (
                  , DT_INICIO_MOVIMENTACAO
                  , "SITUACAO FUNCIONAL"
                  , "ORGAO DE ORIGEM"
-
-
-            from (SELECT distinct SER.NM_SERVIDOR                                                      AS "NOME DO SERVIDOR",
-                         CA.DS_CARGO_RH                                                       AS CARGO,
+            from (SELECT TRIM(SER.NM_SERVIDOR)                                                AS "NOME DO SERVIDOR",
+                         TRIM(CA.DS_CARGO_RH)                                                 AS CARGO,
                          DOC.NR_DOCUMENTACAO                                                  AS CPF,
                          DF.CD_MATRICULA_SIAPE                                                AS SIAPE,
                          LOT1.DS_LOTACAO                                                      AS "UNIDADE DE EXERCICIO",
@@ -729,50 +727,51 @@ FROM (
 
             DB::beginTransaction();
             $sql = DB::select("WITH cargo_eftv as (
-                                            SELECT CE.ID_CARGO_EFETIVO AS id_cargo_ef,
-                                                   CGO.DS_CARGO_RH     as cargo_rh
-                                            FROM AGU_RH.CARGO_EFETIVO CE
-                                                     INNER JOIN AGU_RH.CARGO CGO ON (CE.id_cargo = CGO.ID_CARGO)
-                                                     INNER JOIN AGU_RH.PROVIMENTO P ON (P.ID_CARGO_EFETIVO = CE.id_cargo_efetivo)
-                                                     INNER JOIN AGU_RH.CARGO C ON C.ID_CARGO = CE.ID_CARGO
-                                                     LEFT JOIN AGU_RH.CARREIRA CA ON CA.ID_CARREIRA = C.ID_CARREIRA
-                                            WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
-                                              AND C.DT_OPERACAO_EXCLUSAO IS NULL
-                                              AND P.DT_OPERACAO_EXCLUSAO IS NULL)
-                                        SELECT DISTINCT CE1.ID_CARGO_EFETIVO,
-                                               DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
-                                               SER.NR_CPF_OPERADOR,
-                                               TS.DS_TIPO_SERVIDOR,
-                                               LO.DS_LOTACAO AS DESCRICAO_LOT_ORIGEM,
-                                               LE.DS_LOTACAO AS DESCRICAO_LOT_EXER,
-                                               TO_CHAR(CE1.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
-                                               CA.cargo_rh,
-                                               MOV.ID_TIPO_MOVIMENTACAO,
-                                               MOV.DESCRICAO_MOVIMENTACAO,
-                                               MOV.ORGAO_MOVIMENTACAO,
-                                               MOV.ID_LOTACAO_ORIGEM,
-                                               MOV.DESCRICAO_LOT_ORIGEM,
-                                               MOV.COD_LOT_ORIGEM,
-                                               MOV.SIGLA_LOT_ORIGEM,
-                                               MOV.IDP_ORIGEM,
-                                               MOV.ID_LOTACAO_EXERCICIO,
-                                               MOV.DESCRICAO_LOT_EXER,
-                                               MOV.COD_LOT_EXER,
-                                               MOV.SIGLA_LOT_EXER,
-                                               MOV.IDP_EXER,
-                                               TO_CHAR(MOV.DATA_INICIO, 'DD/MM/YYYY'),
-                                               TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY'),
-                                               MOV.NOME_SERVIDOR,
-                                               MOV.DESCRICAO_MUNICIPIO_LOT_EXER,
-                                               MOV.SIGLA_UF_LOT_EXER
-                                        FROM AGU_RH.VW_REL_MOVIMENTACAO MOV
-                                                 JOIN AGU_RH.DOCUMENTACAO DOC ON DOC.ID_SERVIDOR = MOV.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
-                                                 INNER JOIN SERVIDOR SER ON SER.ID_SERVIDOR = MOV.ID_SERVIDOR
-                                                 INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON CE1.ID_SERVIDOR = MOV.ID_SERVIDOR
-                                                 INNER JOIN AGU_RH.TIPO_SERVIDOR TS ON (SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR)
-                                                 INNER JOIN AGU_RH.LOTACAO LO ON (LO.ID_LOTACAO = MOV.ID_LOTACAO_ORIGEM)
-                                                 INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
-                                                 inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)");
+                                    SELECT DISTINCT CE.ID_CARGO_EFETIVO AS id_cargo_ef,
+                                           TRIM(CGO.DS_CARGO_RH)     as cargo_rh
+                                    FROM AGU_RH.CARGO_EFETIVO CE
+                                             INNER JOIN AGU_RH.CARGO CGO ON (CE.id_cargo = CGO.ID_CARGO)
+                                             INNER JOIN AGU_RH.PROVIMENTO P ON (P.ID_CARGO_EFETIVO = CE.id_cargo_efetivo)
+                                             INNER JOIN AGU_RH.CARGO C ON C.ID_CARGO = CE.ID_CARGO
+                                             LEFT JOIN AGU_RH.CARREIRA CA ON CA.ID_CARREIRA = C.ID_CARREIRA
+                                    WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
+                                      AND C.DT_OPERACAO_EXCLUSAO IS NULL
+                                      AND P.DT_OPERACAO_EXCLUSAO IS NULL
+                                    )
+                                    SELECT DISTINCT CE1.ID_CARGO_EFETIVO,
+                                                DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
+                                                SER.NR_CPF_OPERADOR,
+                                                TRIM(TS.DS_TIPO_SERVIDOR),
+                                                TRIM(LO.DS_LOTACAO) AS DESCRICAO_LOT_ORIGEM,
+                                                TRIM(LE.DS_LOTACAO) AS DESCRICAO_LOT_EXER,
+                                                TO_CHAR(CE1.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
+                                                TRIM(CA.cargo_rh),
+                                                MOV.ID_TIPO_MOVIMENTACAO,
+                                                MOV.DESCRICAO_MOVIMENTACAO,
+                                                TRIM(MOV.ORGAO_MOVIMENTACAO),
+                                                MOV.ID_LOTACAO_ORIGEM,
+                                                TRIM(MOV.DESCRICAO_LOT_ORIGEM),
+                                                MOV.COD_LOT_ORIGEM,
+                                                TRIM(MOV.SIGLA_LOT_ORIGEM),
+                                                MOV.IDP_ORIGEM,
+                                                MOV.ID_LOTACAO_EXERCICIO,
+                                                TRIM(MOV.DESCRICAO_LOT_EXER),
+                                                MOV.COD_LOT_EXER,
+                                                TRIM(MOV.SIGLA_LOT_EXER),
+                                                MOV.IDP_EXER,
+                                                TO_CHAR(MOV.DATA_INICIO, 'DD/MM/YYYY'),
+                                                TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY'),
+                                                TRIM(MOV.NOME_SERVIDOR),
+                                                MOV.DESCRICAO_MUNICIPIO_LOT_EXER,
+                                                MOV.SIGLA_UF_LOT_EXER
+                                    FROM AGU_RH.VW_REL_MOVIMENTACAO MOV
+                                         JOIN AGU_RH.DOCUMENTACAO DOC ON DOC.ID_SERVIDOR = MOV.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                                         INNER JOIN SERVIDOR SER ON SER.ID_SERVIDOR = MOV.ID_SERVIDOR
+                                         INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON CE1.ID_SERVIDOR = MOV.ID_SERVIDOR
+                                         INNER JOIN AGU_RH.TIPO_SERVIDOR TS ON (SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR)
+                                         INNER JOIN AGU_RH.LOTACAO LO ON (LO.ID_LOTACAO = MOV.ID_LOTACAO_ORIGEM)
+                                         INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
+                                         inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)");
             DB::commit();
             return $sql;
         } catch (\Exception $e) {
