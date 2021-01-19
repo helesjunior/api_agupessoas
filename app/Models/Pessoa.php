@@ -651,7 +651,7 @@ FROM (
     public function retornaAfastamentoUnidade($tpDocumento, $dtInicio)
     {
 
-        ini_set("memory_limit", "512M");
+        ini_set("memory_limit", "5112M");
 
 
         if (!is_numeric($tpDocumento)) {
@@ -679,10 +679,10 @@ FROM (
                      CA.DS_CARGO_RH  AS CARGO,
                      DOC.NR_DOCUMENTACAO AS CPF,
                      DF.CD_MATRICULA_SIAPE AS SIAPE,
-                     LOT1.DS_LOTACAO AS "UNIDADE DE EXERCICIO",
+                     TRIM(LOT1.DS_LOTACAO) AS "UNIDADE DE EXERCICIO",
                      TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
-                     TA.DS_TIPO_AFASTAMENTO AS "DESCRICAO TIPO AFASTAMENTO",
-                     A.DS_CID_AFASTAMENTO AS "DESCRICAO CID (TIPO DE DOENCA)",
+                     TRIM(TA.DS_TIPO_AFASTAMENTO) AS "DESCRICAO TIPO AFASTAMENTO",
+                     TRIM(A.DS_CID_AFASTAMENTO) AS "DESCRICAO CID (TIPO DE DOENCA)",
                      A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
                      A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO"
                          ,MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
@@ -702,7 +702,7 @@ FROM (
                 ORDER
                      BY NM_SERVIDOR ASC
                       , DT_INICIO_AFASTAMENTO ASC) s
-            where
+                WHERE
                     s.DT_MOV = s.DT_INICIO_MOVIMENTACAO';
 
             return DB::select($sql, [$tpDocumento, $dtInicio]);
