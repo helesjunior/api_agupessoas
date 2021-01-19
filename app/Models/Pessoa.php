@@ -576,10 +576,10 @@ FROM (
                          TRIM(CA.DS_CARGO_RH)                                                 AS CARGO,
                          DOC.NR_DOCUMENTACAO                                                  AS CPF,
                          DF.CD_MATRICULA_SIAPE                                                AS SIAPE,
-                         LOT1.DS_LOTACAO                                                      AS "UNIDADE DE EXERCICIO",
+                         TRIM(LOT1.DS_LOTACAO)                                                      AS "UNIDADE DE EXERCICIO",
                          TA.CD_TIPO_AFASTAMENTO                                               AS "CODIGO DO AFASTAMENTO",
-                         TA.DS_TIPO_AFASTAMENTO                                               AS "DESCRICAO TIPO AFASTAMENTO",
-                         A.DS_CID_AFASTAMENTO                                                 AS "DESCRICAO CID (TIPO DE DOENCA)",
+                         TRIM(TA.DS_TIPO_AFASTAMENTO)                                               AS "DESCRICAO TIPO AFASTAMENTO",
+                         TRIM(A.DS_CID_AFASTAMENTO)                                                 AS "DESCRICAO CID (TIPO DE DOENCA)",
                          A.DT_INICIO_AFASTAMENTO                                              AS "DATA DE INICIO DO AFASTAMENTO",
                          A.DT_FIM_AFASTAMENTO                                                 AS "DATA FINAL DO AFASTAMENTO"
                           ,
@@ -594,7 +594,7 @@ FROM (
                          MU.NM_MUNICIPIO || \' - \' || UF.SG_UF                                 AS "CIDADE DA UNIDADE",
                          NI.DS_NIVEL                                                          AS "NIVEL",
                          RJ.DS_REGIME_JURIDICO                                                AS "REGIME JURIDICO",
-                         TS.DS_TIPO_SERVIDOR                                                  AS "SITUACAO FUNCIONAL",
+                         TRIM(TS.DS_TIPO_SERVIDOR)                                                  AS "SITUACAO FUNCIONAL",
                          TRUNC(MONTHS_BETWEEN(A.DT_FIM_AFASTAMENTO, SER.DT_NASCIMENTO) / 12)  AS IDADE,
                          LT.SG_ORGAO                                                          AS "ORGAO DE ORIGEM"
                   FROM AGU_RH.SERVIDOR SER
