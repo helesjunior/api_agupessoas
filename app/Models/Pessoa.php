@@ -892,7 +892,7 @@ FROM (
             $sql = DB::select("WITH DADOS AS (
                                     SELECT  DISTINCT TRIM(CAR.DESCRICAO_CARGO)   AS \"DESCRICAO_DO_CARGO\",
                                          DAD.CODIGO_MATRICULA AS \"MATRICULA_SIAPE\",
-                                         DAD.NOME_SERVIDOR    AS \"NOME_DO_SERVIDOR\",
+                                         TRIM(DAD.NOME_SERVIDOR)    AS \"NOME_DO_SERVIDOR\",
                                          DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
 
                                          TO_CHAR(DAD.DATA_RESCISAO, 'DD/MM/YYYY') AS \"DATA_RESCISAO\",
@@ -910,7 +910,7 @@ FROM (
                                          MU.NM_MUNICIPIO || ' - ' || UF.SG_UF AS \"CIDADE DA UNIDADE\",
                                          NI.DS_NIVEL                          AS \"NIVEL\",
                                          RJ.DS_REGIME_JURIDICO                AS \"REGIME JURIDICO\",
-                                         TS.DS_TIPO_SERVIDOR                  AS \"SITUACAO FUNCIONAL\",
+                                         TRIM(TS.DS_TIPO_SERVIDOR)                  AS \"SITUACAO FUNCIONAL\",
                                          LT.SG_ORGAO                          AS \"ORGAO DE ORIGEM\"
         FROM VW_REL_CARGOEFETIVO CAR
         JOIN AGU_RH.DOCUMENTACAO DOC ON DOC.ID_SERVIDOR = CAR.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
