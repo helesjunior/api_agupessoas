@@ -795,7 +795,7 @@ FROM (
                                     SELECT DISTINCT DAD.DATA_INGRESSO                    AS \"Data Ingresso\",
                                                     TRIM(CAR.DESCRICAO_CARGO)            AS \"Descricao do Cargo\",
                                                     DAD.CODIGO_MATRICULA                 AS \"Matricula SIAPE\",
-                                                    DAD.NOME_SERVIDOR                    AS \"Nome do Servidor\",
+                                                    TRIM(DAD.NOME_SERVIDOR)                    AS \"Nome do Servidor\",
                                                     DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
                                                     SER.NR_CPF_OPERADOR                  AS CPF_OPERADOR,
                                                     SER.DT_NASCIMENTO,
