@@ -1095,16 +1095,16 @@ FROM (
         try {
 
             $sql = DB::select("SELECT CASE
-                                           WHEN AA.DS_LOTACAO IS NULL THEN
-                                               AA.CD_LOTACAO
+                                           WHEN TRIM(AA.DS_LOTACAO) IS NULL THEN
+                                               TRIM(AA.CD_LOTACAO)
                                            ELSE
-                                               AA.CD_LOTACAO || ' - ' || AA.DS_LOTACAO
+                                               TRIM(AA.CD_LOTACAO) || ' - ' || TRIM(AA.DS_LOTACAO)
                                            END                                               AS LOTACAO,
                                        CASE
-                                           WHEN AA.DS_CARGO_FUNCAO IS NULL THEN
-                                               AA.CD_CARGO_FUNCAO
+                                           WHEN TRIM(AA.DS_CARGO_FUNCAO) IS NULL THEN
+                                               TRIM(AA.CD_CARGO_FUNCAO)
                                            ELSE
-                                               AA.CD_CARGO_FUNCAO || ' - ' ||                AA.DS_CARGO_FUNCAO
+                                               TRIM(AA.CD_CARGO_FUNCAO) || ' - ' || TRIM(AA.DS_CARGO_FUNCAO)
                                            END                                               AS CARGO,
                                        FG.CD_FUNCAO_GRATIFICADA                              AS FUNCAO,
                                        NVL(TO_CHAR(AA.DT_CRIACAO_CARGO, 'DD/MM/YYYY'), '-')  AS DATA_CRIACAO_CARGO,
@@ -1136,7 +1136,7 @@ FROM (
                                        NVL(TO_CHAR(AA.DATA_EXERCICIO, 'DD/MM/YYYY'), '-')    AS EXERCICIO,
                                        LT.SG_ORGAO                                           AS ORIGEM
                                 FROM (
-                                         SELECT CF.ID_FUNCAO_GRATIFICADA,
+                                         SELECT DISTINCT CF.ID_FUNCAO_GRATIFICADA,
                                                 CF.ID_CARGO_FUNCAO,
                                                 CF.CD_CARGO_FUNCAO,
                                                 CF.DS_CARGO_FUNCAO,
