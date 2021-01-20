@@ -722,7 +722,10 @@ FROM (
      */
     public function retornaMovimentacao()
     {
+
         ini_set("memory_limit", "512M");
+        ini_set("set_time_limit", "600");
+
         try {
 
             DB::beginTransaction();
