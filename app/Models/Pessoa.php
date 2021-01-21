@@ -982,15 +982,15 @@ FROM (
 
             DB::beginTransaction();
             $sql = DB::select("
-                                        SELECT
+                                        SELECT DISTINCT
                                             PAI.CD_LOTACAO,
-                                            PAI.SG_LOTACAO as DS_LOTACAO_PAI,
+                                            TRIM(PAI.SG_LOTACAO) as DS_LOTACAO_PAI,
                                             LOTACAO.CD_LOTACAO,
-                                            LOTACAO.SG_LOTACAO,
+                                            TRIM(LOTACAO.SG_LOTACAO),
                                             LOTACAO.CD_SIORG,
                                         
-                                            LOTACAO.DS_LOTACAO,
-                                            PAI.DS_LOTACAO AS DS_LOTACAO_PAI,
+                                            TRIM(LOTACAO.DS_LOTACAO) AS DS_LOTACAO,
+                                            TRIM(PAI.DS_LOTACAO) AS DS_LOTACAO_PAI1,
                                         
                                             CASE
                                                 WHEN LOTACAO.IN_ATIVO = 1 THEN 'Sim'
@@ -1003,20 +1003,20 @@ FROM (
                                             TIPO_LOTACAO.DS_TIPO_LOTACAO,
                                         
                                             LOTACAO.ID_SERVIDOR_TITULAR AS ID_SERVIDOR_TITULAR,
-                                            AGU_RH.SERVIDOR.NM_SERVIDOR AS NM_SERVIDOR_TITULAR,
+                                            TRIM(AGU_RH.SERVIDOR.NM_SERVIDOR) AS NM_SERVIDOR_TITULAR,
                                             S.ID_SERVIDOR AS ID_SERVIDOR_SUBSTITUTO,
-                                            S.NM_SERVIDOR AS NM_SERVIDOR_SUBSTITUTO,
+                                            TRIM(S.NM_SERVIDOR) AS NM_SERVIDOR_SUBSTITUTO,
                                         
                                             TELEFONE.NR_DDD  AS DDD,
                                             TELEFONE.NR_TELEFONE AS TELEFONE,
                                         
                                             MUNICIPIO.NM_MUNICIPIO AS MUNICIPIO,
-                                            ENDERECO.DS_ENDERECO AS ENDERECO,
-                                            ENDERECO.NM_BAIRRO  AS BAIRRO,
-                                            ENDERECO.NR_CEP  AS CEP,
-                                            ENDERECO.DS_COMPLEMENTO  AS COMPLEMENTO,
+                                            TRIM(ENDERECO.DS_ENDERECO) AS ENDERECO,
+                                            TRIM(ENDERECO.NM_BAIRRO)  AS BAIRRO,
+                                            TRIM(ENDERECO.NR_CEP)  AS CEP,
+                                            TRIM(ENDERECO.DS_COMPLEMENTO)  AS COMPLEMENTO,
                                             UF.SG_UF AS UF,
-                                            LOTACAO.NM_EMAIL_LOTACAO,
+                                            TRIM(LOTACAO.NM_EMAIL_LOTACAO),
                                             TO_CHAR(LOTACAO.DT_INICIO_UDP, 'DD/MM/YYYY') AS DT_INICIO_UDP,
                                             TO_CHAR(LOTACAO.DT_EXPIRACAO_UDP, 'DD/MM/YYYY') AS DT_EXPIRACAO_UDP,
                                             CASE
