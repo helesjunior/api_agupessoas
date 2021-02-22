@@ -96,6 +96,19 @@ class PessoaController extends Controller
         return $model->retornarDadosAfastamentos($dtExercicio);
     }
 
+    /**
+     * Lista os afastamentos dos servidores
+     *
+     * @see http://redminedti.agu.gov.br/redmine/issues/173
+     * @param $dtExercicio
+     * @return array
+     */
+    public function listarApuracaoAntiguidade(Request $request)
+    {
+        $model = new Pessoa();
+        return $model->retornaApuracaoAntiguidade($request);
+    }
+
     public function buscaServidorTcu($cpf)
     {
         $modelo = new Pessoa();

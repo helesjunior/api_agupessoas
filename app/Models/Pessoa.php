@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class Pessoa extends Base
@@ -482,6 +483,163 @@ FROM (
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
         }
     }
+
+
+    /**
+     * Retorna a lista de afastamentos dos servidores AU e PFN
+     *
+     * @param $request['dataExercicio']
+     * @param $request['tipoCargo']
+     * @return mixed
+     */
+    public function retornaApuracaoAntiguidade(Request $request)
+    {
+        $validator = \Validator::make($request->all(), [
+            'dataExercicio' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return 'Data inválida, favor verificar o formato.';
+        }
+
+        try {
+            if(isset($request['dataExercicio'])) {
+                Carbon::parse($request['dataExercicio']);
+            }
+        } catch (\Exception $e) {
+            return 'Data inválida, favor verificar o formato informado.';
+        }
+
+        #se data vier vazia, coloca a data de hoje. PARA POWERBI
+        if(empty($request['dataExercicio'])){
+            $request['dataExercicio'] = Carbon::now()->format('d/m/Y');
+        }
+
+        if(empty($request['tipoCargo']) || is_numeric($request['tipoCargo'])){
+            return 'Tipo de cargo inválido, favor verificar valor informado.';
+        }
+
+        $tipoCargo = '';
+        if($request['tipoCargo'] == 'adv' || $request['tipoCargo'] == 'advogado') {
+            /*Advogado da União*/
+            $tipoCargo = "AND C.CD_CARGO_RH IN ('410001', '410004', '414001', '414017')";
+        } elseif ($request['tipoCargo'] ==='proc' || $request['tipoCargo'] ==='procurador') {
+            /*Procurador Federal*/
+            $tipoCargo = "AND C.CD_CARGO_RH IN ('R408001', '408001', 'R408002', '408002')";
+        } else {
+            return 'Tipo de cargo inválido, favor verificar valor informado.';
+        }
+
+        try {
+            $sql = DB::select("
+        WITH NATAL AS (
+            SELECT SERVIDOR.DS_CARGO_RH                                 as \"Cargo\",
+                   SERVIDOR.NM_SERVIDOR                                 as \"Nome\",
+                   (case
+                        when SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 then NULL
+                        else SERVIDOR.NR_CLASSIFICACAO_CONCURSO end)    as \"Classificacao Concurso Publico\",
+                   (case
+                        when SERVIDOR.NR_ANO_CONCURSO = 0 then NULL
+                        else SERVIDOR.NR_ANO_CONCURSO end)              as \"Ano Concurso Publico\",
+                   TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')        as \"Data de Nascimento\",
+                   SERVIDOR.CD_SERVIDOR                                 as \"APURACAO - Cod. Servidor\",
+                   SERVIDOR.ID_SERVIDOR                                 as \"APURACAO - ID Servidor\",
+                   TO_CHAR(SERVIDOR.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') as \"APURACAO - Data de Ingresso\",
+                   (CASE
+                        WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
+                        ELSE 0 END)                                     as \"APURACAO - Dias Afastados\",
+                   SERVIDOR.ID_TIPO_PROVIMENTO AS \"TIPO PROVIMENTO\",
+                   SERVIDOR.DS_TIPO_PROVIMENTO AS \"DESCRICAO PROVIMENTO\",
+
+                   SERVIDOR.ID_SERVIDOR
+            FROM (SELECT DISTINCT S.CD_SERVIDOR,
+                S.NM_SERVIDOR,
+                S.ID_SERVIDOR,
+                C.CD_CARGO_RH,
+                C.DS_CARGO_RH,
+                CE.DT_INGRESSO_SERVIDOR,
+                CE.ID_CARGO,
+                (SELECT SUM((CASE
+                WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
+                THEN TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
+                ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
+                FROM AGU_RH.AFASTAMENTO A
+                INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
+                WHERE TA.CD_TIPO_AFASTAMENTO IN
+                      ('1005504', '3161', '5000', '3101', '3104', '3118', '3133', '3136', '3137', '3142')
+                AND A.DT_INICIO_AFASTAMENTO < TO_DATE('31122016', 'DD/MM/YYYY')
+                AND A.ID_SERVIDOR = S.ID_SERVIDOR) AS DIAS_AFASTADO,
+                DP.NR_CLASSIFICACAO_PNE            NR_CLASSIFICACAO_CONCURSO,
+                CE.NR_ANO_CONCURSO,
+                S.DT_NASCIMENTO,
+                TP.DS_TIPO_PROVIMENTO,
+                TP.ID_TIPO_PROVIMENTO
+                FROM AGU_RH.SERVIDOR S
+                INNER JOIN AGU_RH.DOCUMENTACAO D ON S.ID_SERVIDOR = D.ID_SERVIDOR AND D.ID_TIPO_DOCUMENTACAO = 1
+                INNER JOIN AGU_RH.DADO_FUNCIONAL DF ON S.ID_SERVIDOR = DF.ID_SERVIDOR
+                INNER JOIN AGU_RH.CARGO_EFETIVO CE ON S.ID_SERVIDOR = CE.ID_SERVIDOR
+                INNER JOIN AGU_RH.CARGO C ON CE.ID_CARGO = C.ID_CARGO
+                LEFT JOIN AGU_RH.MOVIMENTACAO M ON S.ID_SERVIDOR = M.ID_SERVIDOR AND M.DT_FINAL_MOVIMENTACAO IS NULL
+                LEFT JOIN AGU_RH.PROVIMENTO P ON P.ID_CARGO_EFETIVO = CE.ID_CARGO_EFETIVO
+                INNER JOIN AGU_RH.TIPO_PROVIMENTO TP ON TP.ID_TIPO_PROVIMENTO = P.ID_TIPO_PROVIMENTO
+                LEFT JOIN AGU_RH.DADO_PROMOCAO DP ON DP.ID_SERVIDOR = CE.ID_SERVIDOR
+                WHERE S.IN_STATUS_SERVIDOR = 1
+                AND CE.DT_OPERACAO_EXCLUSAO IS NULL
+                AND P.ID_PROVIMENTO NOT IN (SELECT ID_PROVIMENTO
+                FROM AGU_RH.VACANCIA
+                WHERE ID_PROVIMENTO = P.ID_PROVIMENTO
+                AND DT_OPERACAO_EXCLUSAO IS NULL)
+
+                {$tipoCargo}
+
+                 ) SERVIDOR
+            ORDER BY NR_CLASSIFICACAO_CONCURSO ASC, NR_ANO_CONCURSO DESC, DT_NASCIMENTO
+        ),
+             ANO_NOVO AS (
+
+                 SELECT
+                     ID_SERVIDOR
+                     ,CE.ID_SERVIDOR as \"APURACAO - ID Servidor\"
+                     ,MIN(CE.DT_INGRESSO_SERVIDOR) AS DT_INGRESSO_SERVIDOR
+                     ,(TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
+
+                 FROM AGU_RH.CARGO_EFETIVO CE
+                 WHERE DT_INGRESSO_SERVIDOR = ( SELECT MIN(DT_INGRESSO_SERVIDOR) FROM AGU_RH.CARGO_EFETIVO WHERE ID_SERVIDOR = CE.ID_SERVIDOR)
+                 GROUP BY CE.ID_SERVIDOR, CE.DT_INGRESSO_SERVIDOR
+                 ORDER BY CE.DT_INGRESSO_SERVIDOR ASC
+
+             )
+
+        SELECT NATAL.\"Cargo\", NATAL.\"Nome\"
+             ,NATAL.\"Classificacao Concurso Publico\"
+             ,NATAL.\"Ano Concurso Publico\"
+             ,NATAL.\"Data de Nascimento\"
+             ,round((ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
+                                                  THEN NATAL.\"APURACAO - Dias Afastados\"
+                                                  ELSE 0
+                 END)) / 365, 4) as \"Tempo de Efetivo Exercicio\"
+             ,NATAL.\"APURACAO - Cod. Servidor\"
+             ,NATAL.\"APURACAO - ID Servidor\"
+             ,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
+             ,(ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL THEN NATAL.\"APURACAO - Dias Afastados\"
+                                             ELSE 0 END)
+              ) AS \"APURACAO - Dias de Efet Exerc\"
+             ,NATAL.\"APURACAO - Dias Afastados\"
+             ,NATAL.\"TIPO PROVIMENTO\"
+             ,NATAL.\"DESCRICAO PROVIMENTO\"
+        FROM NATAL
+                 INNER JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
+        ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR
+        ", []); //$dtExercicio, $request['tipoCargo']
+            return $sql;
+        } catch (\Exception $e) {
+
+            return $e->getMessage();
+
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
 
     /**
      * Retorna Listagem contendo dados para o ConectaTCU

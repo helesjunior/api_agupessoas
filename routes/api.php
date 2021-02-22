@@ -64,6 +64,12 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
     # Redmine issue 173
     Route::get('estagios/dtExercicio/{dtExercicio}', 'PessoaController@listarEstagios');
     Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');
+
+
+    #Apuracao Antiguidade
+    Route::get('apuracao-antiguidade', 'PessoaController@listarApuracaoAntiguidade')->name('apuracao-antiguidade');
+
+
 });
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
