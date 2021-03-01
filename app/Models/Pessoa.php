@@ -614,10 +614,10 @@ FROM (
              ,NATAL.\"Classificacao Concurso Publico\"
              ,NATAL.\"Ano Concurso Publico\"
              ,NATAL.\"Data de Nascimento\"
-             ,round((ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
+             ,REPLACE(round((ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
                                                   THEN NATAL.\"APURACAO - Dias Afastados\"
                                                   ELSE 0
-                 END)) / 365, 4) as \"Tempo de Efetivo Exercicio\"
+                 END)) / 365, 4), '.', ',')  AS \"Tempo de Efetivo Exercicio\"
              ,NATAL.\"APURACAO - Cod. Servidor\"
              ,NATAL.\"APURACAO - ID Servidor\"
              ,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
