@@ -617,7 +617,7 @@ FROM (
              ,REPLACE(round((ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
                                                   THEN NATAL.\"APURACAO - Dias Afastados\"
                                                   ELSE 0
-                 END)) / 365, 4), '.', ',')  AS \"Tempo de Efetivo Exercicio\"
+                 END)) / 365, 4), '.', '')  AS \"Tempo_de_Efetivo_Exercicio\"
              ,NATAL.\"APURACAO - Cod. Servidor\"
              ,NATAL.\"APURACAO - ID Servidor\"
              ,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
@@ -631,11 +631,15 @@ FROM (
                  INNER JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
         ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR
         ", []); //$dtExercicio, $request['tipoCargo']
-            return $sql;
+
+            $dados = [];
+            foreach($sql as $data) {
+                $data->tempo_de_efetivo_exercicio = substr_replace($data->tempo_de_efetivo_exercicio, ',', 2, 0);
+                $dados[] = $data;
+            }
+
+            return $dados;
         } catch (\Exception $e) {
-
-            return $e->getMessage();
-
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
         }
     }
