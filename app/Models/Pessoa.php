@@ -655,36 +655,48 @@ FROM (
 
     public function retornaConectaTCU($cpf)
     {
-        $result = DB::table('SERVIDOR')
-            ->join('DOCUMENTACAO', 'DOCUMENTACAO.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
-            ->leftJoin('DADO_FUNCIONAL', 'DADO_FUNCIONAL.ID_SERVIDOR', '=', 'SERVIDOR.ID_SERVIDOR')
-            ->leftJoin('cargo_efetivo', 'cargo_efetivo.id_servidor', '=', 'servidor.id_servidor')
-            ->leftJoin('cargo', 'cargo.id_cargo', '=', 'cargo_efetivo.id_cargo')
-            ->select('SERVIDOR.NM_SERVIDOR as nome do servidor',
-                'DOCUMENTACAO.NR_DOCUMENTACAO as cpf',
-                DB::raw("CASE
-                            WHEN cargo.cd_cargo_rh IN ('410001','410004','R410004','414001','414017','R414017')
-                                THEN 'ADVOGADO DA UNIÃO'
-                            WHEN cargo.CD_CARGO_RH IN ('408001','408002','R408001','R408002')
-                                THEN 'PROCURADOR FEDERAL'
-                            ELSE 'SERVIDOR'
-                          END  AS CARREIRA"),
-                DB::raw("CASE
-                            WHEN  servidor.in_status_servidor ='1' THEN 'ATIVO'
-                            ELSE 'INATIVO'
-                          END  AS STATUS"),
 
-                'DADO_FUNCIONAL.CD_MATRICULA_SIAPE as matricula_siape',
-                'cargo.cd_cargo_rh as codigo do cargo',
-                'cargo.ds_cargo_rh as nome do cargo',
-                DB::raw('SYSDATE as consultado_em')
-            )
-            ->where('DOCUMENTACAO.NR_DOCUMENTACAO', $cpf)
-            ->whereIn('CD_CARGO_RH', [410001, 410004, 'R410004', 414001, 414017, 'R414017', 408001, 408002, 'R408001', 'R408002'])
-            ->first();
 
-        return $result;
+        if (!is_numeric($cpf)) {
+            return ['error', 'Formato inválido para o cpf,o campo só aceita números, por favor verifique o formato e tente novamente'];
+        }
 
+        try {
+
+            $sql = DB::select('
+            
+             
+SELECT "SERVIDOR"."NM_SERVIDOR" as "NOME DO SERVIDOR", "DOCUMENTACAO"."NR_DOCUMENTACAO" as "CPF",
+       CASE
+           WHEN cargo.cd_cargo_rh IN (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\')
+               THEN \'ADVOGADO DA UNIÃO\'
+           WHEN cargo.CD_CARGO_RH IN (\'408001\',\'408002\',\'R408001\',\'R408002\')
+               THEN \'PROCURADOR FEDERAL\'
+           ELSE \'SERVIDOR\'
+           END  AS CARREIRA,
+       CASE
+           WHEN  servidor.in_status_servidor = \'1\' THEN \'ATIVO\'
+           ELSE \'INATIVO\'
+           END  AS STATUS, "DADO_FUNCIONAL"."CD_MATRICULA_SIAPE" as "MATRICULA_SIAPE", "CARGO"."CD_CARGO_RH" as "CODIGO DO CARGO", "CARGO"."DS_CARGO_RH" as "NOME DO CARGO", TO_CHAR(SYSDATE, \'dd/mm/yyyy\') as consultado_em
+from "SERVIDOR" inner join "DOCUMENTACAO" on "DOCUMENTACAO"."ID_SERVIDOR" = "SERVIDOR"."ID_SERVIDOR"
+                left join "DADO_FUNCIONAL" on "DADO_FUNCIONAL"."ID_SERVIDOR" = "SERVIDOR"."ID_SERVIDOR"
+                left join "CARGO_EFETIVO" on "CARGO_EFETIVO"."ID_SERVIDOR" = "SERVIDOR"."ID_SERVIDOR"
+                left join "CARGO" on "CARGO"."ID_CARGO" = "CARGO_EFETIVO"."ID_CARGO"
+where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
+  and "CD_CARGO_RH" in (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\',\'408001\',\'408002\',\'R408001\',\'R408002\') and rownum = 1
+                       
+            ', [$cpf]);
+
+            if($sql == null) {
+                die('CPF encontrado, porém regras de cargo não se aplica a esse usuário.');
+            }
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ["error", "Ocorreu um erro no carregamento de dados, por favor tente novamente."];
+        }
+
+        return $sql;
     }
 
     /**
