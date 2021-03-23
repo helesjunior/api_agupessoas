@@ -552,6 +552,8 @@ FROM (
                    SERVIDOR.DS_TIPO_PROVIMENTO AS \"DESCRICAO PROVIMENTO\",
 
                    SERVIDOR.ID_SERVIDOR
+                   ,           SERVIDOR.CD_CARGO_RH
+
             FROM (SELECT DISTINCT S.CD_SERVIDOR,
                 S.NM_SERVIDOR,
                 S.ID_SERVIDOR,
@@ -608,38 +610,54 @@ FROM (
                  GROUP BY CE.ID_SERVIDOR, CE.DT_INGRESSO_SERVIDOR
                  ORDER BY CE.DT_INGRESSO_SERVIDOR ASC
 
-             )
+             ), CARNAVAL AS (
+                     SELECT ID_SERVIDOR
+                          , CE.ID_SERVIDOR                                                   as \"APURACAO - ID Servidor\"
+                          , MIN(CE.DT_INGRESSO_SERVIDOR)                                     AS DT_INGRESSO_SERVIDOR
+                          , (TO_DATE('22-03-2021', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
+            
+                     FROM AGU_RH.CARGO_EFETIVO CE
+                     WHERE DT_INGRESSO_SERVIDOR =
+                           (SELECT MAX(DT_INGRESSO_SERVIDOR) FROM AGU_RH.CARGO_EFETIVO WHERE ID_SERVIDOR = CE.ID_SERVIDOR)
+                     GROUP BY CE.ID_SERVIDOR, CE.DT_INGRESSO_SERVIDOR
+                     ORDER BY CE.DT_INGRESSO_SERVIDOR DESC
+                 )
 
         SELECT NATAL.\"Cargo\", NATAL.\"Nome\"
+                    ,CASE WHEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') <>  TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
+                           THEN 'SIM'
+                END AS DIFERENTE
              ,NATAL.\"Classificacao Concurso Publico\"
              ,NATAL.\"Ano Concurso Publico\"
              ,NATAL.\"Data de Nascimento\"
              ,REPLACE(round((ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
                                                   THEN NATAL.\"APURACAO - Dias Afastados\"
                                                   ELSE 0
-                 END)) / 365, 4), '.', '')  AS \"Tempo_de_Efetivo_Exercicio\"
+                 END)) / 365, 4), '.', ',')  AS \"Tempo de Efetivo Exercicio\"
              ,NATAL.\"APURACAO - Cod. Servidor\"
              ,NATAL.\"APURACAO - ID Servidor\"
              ,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
+             , CASE
+                   WHEN NATAL.CD_CARGO_RH IN ('410001', 'R410004', '011002', '410004', '414001', 'R414017', '414017')
+                       THEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
+                   ELSE
+                       TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
+             END AS \"APURACAO - DATA DE INGRESSO\"
              ,(ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL THEN NATAL.\"APURACAO - Dias Afastados\"
                                              ELSE 0 END)
               ) AS \"APURACAO - Dias de Efet Exerc\"
              ,NATAL.\"APURACAO - Dias Afastados\"
              ,NATAL.\"TIPO PROVIMENTO\"
              ,NATAL.\"DESCRICAO PROVIMENTO\"
-        FROM NATAL
-                 INNER JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
-        ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR
+            FROM NATAL
+                     LEFT JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
+                     LEFT JOIN CARNAVAL ON CARNAVAL.ID_SERVIDOR = NATAL.ID_SERVIDOR
+            ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR        
         ", []); //$dtExercicio, $request['tipoCargo']
 
-            $dados = [];
-            foreach($sql as $data) {
-                $data->tempo_de_efetivo_exercicio = substr_replace($data->tempo_de_efetivo_exercicio, ',', 2, 0);
-                $dados[] = $data;
-            }
-
-            return $dados;
+            return $sql;
         } catch (\Exception $e) {
+            return $e->getMessage();
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
         }
     }
@@ -683,15 +701,15 @@ from "SERVIDOR" inner join "DOCUMENTACAO" on "DOCUMENTACAO"."ID_SERVIDOR" = "SER
                 left join "CARGO_EFETIVO" on "CARGO_EFETIVO"."ID_SERVIDOR" = "SERVIDOR"."ID_SERVIDOR"
                 left join "CARGO" on "CARGO"."ID_CARGO" = "CARGO_EFETIVO"."ID_CARGO"
 where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
-  and "CD_CARGO_RH" in (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\',\'408001\',\'408002\',\'R408001\',\'R408002\') and rownum = 1
-                       
+  and "CD_CARGO_RH" in (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\',\'408001\',\'408002\',\'R408001\',\'R408002\') and rownum = 1                       
             ', [$cpf]);
 
             if($sql == null) {
-                die('CPF encontrado, porém regras de cargo não se aplica a esse usuário.');
+                die('CPF encontrado, o código encontrado não atende ao requisito de busca.');
             }
 
             return $sql;
+
         } catch (\Exception $e) {
             return ["error", "Ocorreu um erro no carregamento de dados, por favor tente novamente."];
         }
