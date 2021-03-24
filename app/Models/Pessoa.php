@@ -429,7 +429,7 @@ class Pessoa extends Base
             ->whereIn('CD_CARGO_RH', ['410001', '410004', 'R410004', '414001', '414017', 'R414017', '408001', '408002', 'R408001', 'R408002'])
             ->first();
 
-        return $result ? $result : die("Não existe este CPF para os cargos: ADVOGADO DA UNIÃO ou PROCURADOR FEDERAL ou SERVIDOR na Base de Dados da AGU.");
+        return $result ? $result : die("CPF não consta na Base de Dados de Membros da AGU.");
 
     }
 
