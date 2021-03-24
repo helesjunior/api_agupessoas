@@ -615,7 +615,7 @@ FROM (
                           , CE.ID_SERVIDOR                                                   as \"APURACAO - ID Servidor\"
                           , MIN(CE.DT_INGRESSO_SERVIDOR)                                     AS DT_INGRESSO_SERVIDOR
                           , (TO_DATE('22-03-2021', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
-            
+
                      FROM AGU_RH.CARGO_EFETIVO CE
                      WHERE DT_INGRESSO_SERVIDOR =
                            (SELECT MAX(DT_INGRESSO_SERVIDOR) FROM AGU_RH.CARGO_EFETIVO WHERE ID_SERVIDOR = CE.ID_SERVIDOR)
@@ -652,7 +652,7 @@ FROM (
             FROM NATAL
                      LEFT JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
                      LEFT JOIN CARNAVAL ON CARNAVAL.ID_SERVIDOR = NATAL.ID_SERVIDOR
-            ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR        
+            ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR
         ", []); //$dtExercicio, $request['tipoCargo']
 
             return $sql;
@@ -682,8 +682,8 @@ FROM (
         try {
 
             $sql = DB::select('
-            
-             
+
+
 SELECT "SERVIDOR"."NM_SERVIDOR" as "NOME DO SERVIDOR", "DOCUMENTACAO"."NR_DOCUMENTACAO" as "CPF",
        CASE
            WHEN cargo.cd_cargo_rh IN (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\')
@@ -701,7 +701,7 @@ from "SERVIDOR" inner join "DOCUMENTACAO" on "DOCUMENTACAO"."ID_SERVIDOR" = "SER
                 left join "CARGO_EFETIVO" on "CARGO_EFETIVO"."ID_SERVIDOR" = "SERVIDOR"."ID_SERVIDOR"
                 left join "CARGO" on "CARGO"."ID_CARGO" = "CARGO_EFETIVO"."ID_CARGO"
 where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
-  and "CD_CARGO_RH" in (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\',\'408001\',\'408002\',\'R408001\',\'R408002\') and rownum = 1                       
+  and "CD_CARGO_RH" in (\'410001\',\'410004\',\'R410004\',\'414001\',\'414017\',\'R414017\',\'408001\',\'408002\',\'R408001\',\'R408002\') and rownum = 1
             ', [$cpf]);
 
             if($sql == null) {
@@ -1097,8 +1097,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                          CASE SER.CD_SEXO
                                              WHEN 'M' THEN 'MASCULINO'
                                              ELSE 'FEMININO'
-                                             END,
-                                         SER.NR_CPF_OPERADOR,
+                                             END as SEXO,
                                          MOV.ID_SERVIDOR,
                                          LOT.CD_LOTACAO                       AS \"CODIGO UNIDADE EXERCICIO\",
                                          UF.SG_UF                             AS UF,
@@ -1149,8 +1148,11 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
         SELECT ID_SERVIDOR,MAX(DT_FIM_AFASTAMENTO) AS DT_FIM_AFASTAMENTO FROM AGU_RH.AFASTAMENTO GROUP BY ID_SERVIDOR
         )
         SELECT DISTINCT
-        TRUNC(MONTHS_BETWEEN(AFAST.DT_FIM_AFASTAMENTO, DADOS.DT_NASCIMENTO) / 12)  AS IDADE,
-        DADOS.*
+		 TO_CHAR(AFAST.DT_FIM_AFASTAMENTO, 'DD/MM/YYYY') AS DATA_AFASTAMENTO,
+          floor(MONTHS_BETWEEN(AFAST.DT_FIM_AFASTAMENTO, DT_NASCIMENTO) / 12)  AS IDADE,
+              TO_CHAR(DADOS.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO,
+            DADOS.*
+
         FROM DADOS LEFT JOIN AFAST ON AFAST.ID_SERVIDOR = DADOS.ID_SERVIDOR");
             DB::commit();
 
@@ -1180,10 +1182,10 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                             LOTACAO.CD_LOTACAO,
                                             TRIM(LOTACAO.SG_LOTACAO),
                                             LOTACAO.CD_SIORG,
-                                        
+
                                             TRIM(LOTACAO.DS_LOTACAO) AS DS_LOTACAO,
                                             TRIM(PAI.DS_LOTACAO) AS DS_LOTACAO_PAI1,
-                                        
+
                                             CASE
                                                 WHEN LOTACAO.IN_ATIVO = 1 THEN 'Sim'
                                                 WHEN LOTACAO.IN_ATIVO = 0 THEN 'Não'
@@ -1193,15 +1195,15 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                             TO_CHAR(LOTACAO.DT_CRIACAO_LOTACAO, 'DD/MM/YYYY') AS DT_CRIACAO_LOTACAO,
                                             TO_CHAR(LOTACAO.DT_EXTINCAO_LOTACAO, 'DD/MM/YYYY') AS DT_EXTINCAO_LOTACAO,
                                             TIPO_LOTACAO.DS_TIPO_LOTACAO,
-                                        
+
                                             LOTACAO.ID_SERVIDOR_TITULAR AS ID_SERVIDOR_TITULAR,
                                             TRIM(AGU_RH.SERVIDOR.NM_SERVIDOR) AS NM_SERVIDOR_TITULAR,
                                             S.ID_SERVIDOR AS ID_SERVIDOR_SUBSTITUTO,
                                             TRIM(S.NM_SERVIDOR) AS NM_SERVIDOR_SUBSTITUTO,
-                                        
+
                                             TELEFONE.NR_DDD  AS DDD,
                                             TELEFONE.NR_TELEFONE AS TELEFONE,
-                                        
+
                                             MUNICIPIO.NM_MUNICIPIO AS MUNICIPIO,
                                             TRIM(ENDERECO.DS_ENDERECO) AS ENDERECO,
                                             TRIM(ENDERECO.NM_BAIRRO)  AS BAIRRO,
@@ -1221,7 +1223,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                                 WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'F' THEN 'Sim'
                                                 ELSE ''
                                                 END  AS IN_TIPO_NORMA_ODS
-                                        
+
                                         FROM AGU_RH.LOTACAO,
                                              AGU_RH.LOTACAO LOT,
                                              AGU_RH.SERVIDOR,
@@ -1232,7 +1234,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                              AGU_RH.ENDERECO,
                                              AGU_RH.MUNICIPIO,
                                              AGU_RH.UF
-                                        
+
                                         WHERE LOTACAO.DT_OPERACAO_EXCLUSAO IS NULL
                                           AND LOT.ID_LOTACAO (+) = AGU_RH.LOTACAO.ID_LOTACAO_PAI
                                           AND AGU_RH.SERVIDOR.ID_SERVIDOR (+) = AGU_RH.LOTACAO.ID_SERVIDOR_TITULAR
