@@ -99,7 +99,7 @@ class PessoaController extends Controller
     public function buscaServidorTcu($cpf)
     {
         $modelo = new Pessoa();
-         return json_encode($modelo->retornaConectaTCU($cpf));
+        return json_encode($modelo->retornaConectaTCU($cpf), JSON_UNESCAPED_UNICODE);
     }
 
     /**
