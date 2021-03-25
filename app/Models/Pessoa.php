@@ -987,12 +987,12 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
 
             DB::beginTransaction();
             $sql = DB::select("WITH dados as (
-                                    SELECT DISTINCT DAD.DATA_INGRESSO                    AS \"Data Ingresso\",
+                                    SELECT DISTINCT 
+                                                    DAD.DATA_INGRESSO                  AS \"Data Ingresso\",
                                                     TRIM(CAR.DESCRICAO_CARGO)            AS \"Descricao do Cargo\",
                                                     DAD.CODIGO_MATRICULA                 AS \"Matricula SIAPE\",
                                                     TRIM(DAD.NOME_SERVIDOR)                    AS \"Nome do Servidor\",
                                                     DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
-                                                    SER.NR_CPF_OPERADOR                  AS CPF_OPERADOR,
                                                     SER.DT_NASCIMENTO,
                                                     SER.ID_SERVIDOR,
                                                     DAD.DESC_TIPO_ADM                    AS \"Tipo Admissao - Descr.\",
@@ -1061,12 +1061,13 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                          SELECT ID_SERVIDOR,MAX(DT_FIM_AFASTAMENTO) as DT_FIM_AFASTAMENTO FROM AGU_RH.AFASTAMENTO group by ID_SERVIDOR
                                      )
                                 select distinct
-                                    TRUNC(MONTHS_BETWEEN(afast.DT_FIM_AFASTAMENTO, dados.DT_NASCIMENTO) / 12)  AS IDADE,
-                                    dados.*
+                                     floor(MONTHS_BETWEEN(TO_DATE(dados.\"Data Ingresso\",'DD-MM-YYYY'), dados.DT_NASCIMENTO) / 12)  AS IDADE,
+                                     dados.*
                                 from dados left join afast on afast.ID_SERVIDOR = dados.ID_SERVIDOR");
+          
             DB::commit();
-
-            return $sql;
+        
+           return $sql;
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
         }
