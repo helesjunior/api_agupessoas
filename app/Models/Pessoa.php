@@ -614,7 +614,7 @@ FROM (
                      SELECT ID_SERVIDOR
                           , CE.ID_SERVIDOR                                                   as \"APURACAO - ID Servidor\"
                           , MIN(CE.DT_INGRESSO_SERVIDOR)                                     AS DT_INGRESSO_SERVIDOR
-                          , (TO_DATE('22-03-2021', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
+                          , (TO_DATE('{$request['dataExercicio']}, 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
 
                      FROM AGU_RH.CARGO_EFETIVO CE
                      WHERE DT_INGRESSO_SERVIDOR =
