@@ -647,11 +647,11 @@ FROM (
             END)) / 365, 4), '.', '')                               AS \"Tempo de Efetivo Exercicio\"
              , NATAL.\"APURACAO - Cod. Servidor\"
              , NATAL.\"APURACAO - ID Servidor\"
-             ,(ANO_NOVO.TMP_CARREIRA - (CASE
+             ,(CARNAVAL.TMP_CARREIRA - (CASE
                                     WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
                                         THEN NATAL.\"APURACAO - Dias Afastados\"
                                     ELSE 0 END)
-             ) AS \"APURACAO - Dias de Efet Exerc\"
+              ) AS \"APURACAO - Dias de Efet Exerc\"
              , NATAL.\"APURACAO - Dias Afastados\"
              , NATAL.\"TIPO PROVIMENTO\"
              , NATAL.\"DESCRICAO PROVIMENTO\"
