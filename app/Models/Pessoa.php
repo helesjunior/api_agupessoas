@@ -614,7 +614,7 @@ FROM (
                      SELECT ID_SERVIDOR
                           , CE.ID_SERVIDOR                                                   as \"APURACAO - ID Servidor\"
                           , MIN(CE.DT_INGRESSO_SERVIDOR)                                     AS DT_INGRESSO_SERVIDOR
-                          , (TO_DATE('{$request['dataExercicio']}, 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
+                          , (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
 
                      FROM AGU_RH.CARGO_EFETIVO CE
                      WHERE DT_INGRESSO_SERVIDOR =
@@ -623,37 +623,44 @@ FROM (
                      ORDER BY CE.DT_INGRESSO_SERVIDOR DESC
                  )
 
-        SELECT NATAL.\"Cargo\", NATAL.\"Nome\"
-                    ,CASE WHEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') <>  TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
-                           THEN 'SIM'
-                END AS DIFERENTE
-             ,NATAL.\"Classificacao Concurso Publico\"
-             ,NATAL.\"Ano Concurso Publico\"
-             ,NATAL.\"Data de Nascimento\"
-             ,REPLACE(round((ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
-                                                  THEN NATAL.\"APURACAO - Dias Afastados\"
-                                                  ELSE 0
-                 END)) / 365, 4), '.', ',')  AS \"Tempo de Efetivo Exercicio\"
-             ,NATAL.\"APURACAO - Cod. Servidor\"
-             ,NATAL.\"APURACAO - ID Servidor\"
-             ,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
+        SELECT NATAL.\"Cargo\"
+             , NATAL.\"Nome\"
+             ,CASE WHEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') <>  TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
+                       THEN 'SIM'
+            END AS DIFERENTE
+             --,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
+             --,NATAL.\"APURACAO - Data de Ingresso\" AS \"NATAL\"
              , CASE
                    WHEN NATAL.CD_CARGO_RH IN ('410001', 'R410004', '011002', '410004', '414001', 'R414017', '414017')
                        THEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
                    ELSE
                        TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
              END AS \"APURACAO - DATA DE INGRESSO\"
-             ,(ANO_NOVO.TMP_CARREIRA - (CASE WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL THEN NATAL.\"APURACAO - Dias Afastados\"
+        
+             , NATAL.\"Classificacao Concurso Publico\"
+             , NATAL.\"Ano Concurso Publico\"
+             , NATAL.\"Data de Nascimento\"
+             , REPLACE(round((ANO_NOVO.TMP_CARREIRA - (CASE
+                                                           WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
+                                                               THEN NATAL.\"APURACAO - Dias Afastados\"
+                                                           ELSE 0
+            END)) / 365, 4), '.', '')                               AS \"Tempo_de_Efetivo_Exercicio\"
+             , NATAL.\"APURACAO - Cod. Servidor\"
+             , NATAL.\"APURACAO - ID Servidor\"
+             , (ANO_NOVO.TMP_CARREIRA - (CASE
+                                             WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
+                                                 THEN NATAL.\"APURACAO - Dias Afastados\"
                                              ELSE 0 END)
-              ) AS \"APURACAO - Dias de Efet Exerc\"
-             ,NATAL.\"APURACAO - Dias Afastados\"
-             ,NATAL.\"TIPO PROVIMENTO\"
-             ,NATAL.\"DESCRICAO PROVIMENTO\"
-            FROM NATAL
-                     LEFT JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
-                     LEFT JOIN CARNAVAL ON CARNAVAL.ID_SERVIDOR = NATAL.ID_SERVIDOR
-            ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR
-        ", []); //$dtExercicio, $request['tipoCargo']
+            )                                                       AS \"APURACAO - Dias de Efet Exerc\"
+             , NATAL.\"APURACAO - Dias Afastados\"
+             , NATAL.\"TIPO PROVIMENTO\"
+             , NATAL.\"DESCRICAO PROVIMENTO\"
+             , NATAL.CD_CARGO_RH
+             ,TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS TESTE
+        FROM NATAL
+                 LEFT JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
+                 LEFT JOIN CARNAVAL ON CARNAVAL.ID_SERVIDOR = NATAL.ID_SERVIDOR
+        ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR", []); //$dtExercicio, $request['tipoCargo']
 
             return $sql;
         } catch (\Exception $e) {
