@@ -621,7 +621,7 @@ FROM (
                            (SELECT MAX(DT_INGRESSO_SERVIDOR) FROM AGU_RH.CARGO_EFETIVO WHERE ID_SERVIDOR = CE.ID_SERVIDOR)
                      GROUP BY CE.ID_SERVIDOR, CE.DT_INGRESSO_SERVIDOR
                      ORDER BY CE.DT_INGRESSO_SERVIDOR DESC
-                 )
+                 ) 
 
         SELECT NATAL.\"Cargo\"
              , NATAL.\"Nome\"
