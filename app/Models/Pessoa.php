@@ -535,25 +535,25 @@ FROM (
        SERVIDOR.NM_SERVIDOR                                     AS NOME,
        (CASE
             WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL
-            ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END)        AS CLASSIFICACAO_CONCURSO_PUBLICO,
+            ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END)        AS \"Classificacao Concurso Publico\",
        (CASE
             WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL
-            ELSE SERVIDOR.NR_ANO_CONCURSO END)                  AS ANO_CONCURSO_PUBLICO,
-       TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')            AS DATA_NASCIMENTO,
+            ELSE SERVIDOR.NR_ANO_CONCURSO END)                  AS \"Ano Concurso Publico\",
+       TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')            AS \"Data de Nascimento\",
        ROUND((SERVIDOR_DTC.TMP_CARREIRA -
               (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365,
-             4)                                                 AS TEMPO_DE_EFETIVO_EXERCICIO,
-       SERVIDOR.CD_SERVIDOR                                     AS APURACAO_CODIGO_SERVIDOR,
-       SERVIDOR.ID_SERVIDOR                                     AS APURACAO_ID_SERVIDOR,
-       TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS APURACAO_DATA_DE_INGRESSO,
+             4)                                                 AS \"Tempo de Efetivo Exercicio\",
+       SERVIDOR.CD_SERVIDOR                                     AS \"APURACAO - Cod. Servidor\",
+       SERVIDOR.ID_SERVIDOR                                     AS \"APURACAO - ID Servidor\",
+       TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - Data de Ingresso\",
        (SERVIDOR_DTC.TMP_CARREIRA - (CASE
                                          WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
-                                         ELSE 0 END))           AS APURACAO_DIAS_DE_EFET_EXERC,
+                                         ELSE 0 END))           AS \"APURACAO - Dias de Efet Exerc\",
        (CASE
             WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
-            ELSE 0 END)                                         AS APURACAO_DIAS_AFASTADOS,
-       SERVIDOR.ID_TIPO_PROVIMENTO                              AS ID_TIPO_DE_PROVIMENTO,
-       SERVIDOR.DS_TIPO_PROVIMENTO                              AS DESCRICAO_DO_PROVIMENTO
+            ELSE 0 END)                                         AS  \"APURACAO - Dias Afastados\",
+       SERVIDOR.ID_TIPO_PROVIMENTO                              AS \"TIPO PROVIMENTO\",
+       SERVIDOR.DS_TIPO_PROVIMENTO                              AS \"DESCRICAO PROVIMENTO\"
 FROM (SELECT S.NM_SERVIDOR,
              S.CD_SERVIDOR,
              S.ID_SERVIDOR,
@@ -565,14 +565,13 @@ FROM (SELECT S.NM_SERVIDOR,
                   WHEN S.ID_SERVIDOR IN (13766) THEN 'AJ - INTEGRACAO'
                   ELSE TP.DS_TIPO_PROVIMENTO END)  AS DS_TIPO_PROVIMENTO,
              (SELECT SUM((CASE
-                              WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('29-03-2021', 'DD/MM/YYYY')
-                                  THEN TO_DATE('29-03-2021', 'DD/MM/YYYY')
+                              WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
+                                  THEN TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
                               ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
               FROM AGU_RH.AFASTAMENTO A
                        INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
-              WHERE TA.CD_TIPO_AFASTAMENTO IN
-                    ('1005504', '3161', '5000', '3101', '3104', '3118', '3133', '3136', '3137', '3142')
-                AND A.DT_INICIO_AFASTAMENTO < TO_DATE('29-03-2021', 'DD/MM/YYYY')
+              WHERE TA.CD_TIPO_AFASTAMENTO IN {$tipoCargo}
+                AND A.DT_INICIO_AFASTAMENTO < TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
                 AND A.ID_SERVIDOR = S.ID_SERVIDOR) AS DIAS_AFASTADO,
              DP.NR_CLASSIFICACAO_PNE                  NR_CLASSIFICACAO_CONCURSO,
              CE.NR_ANO_CONCURSO,
