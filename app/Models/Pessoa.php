@@ -522,155 +522,123 @@ FROM (
         $tipoCargo = '';
         if($request['tipoCargo'] == 'adv' || $request['tipoCargo'] == 'advogado') {
             /*Advogado da União*/
-            $tipoCargo = "AND C.CD_CARGO_RH IN ('410001', '410004', '414001', '414017')";
+            $tipoCargo = "('410001', '410004', '414001', '414017')";
         } elseif ($request['tipoCargo'] ==='proc' || $request['tipoCargo'] ==='procurador') {
             /*Procurador Federal*/
-            $tipoCargo = "AND C.CD_CARGO_RH IN ('R408001', '408001', 'R408002', '408002')";
+            $tipoCargo = "('R408001', '408001', 'R408002', '408002')";
         } else {
             return 'Tipo de cargo inválido, favor verificar valor informado.';
         }
 
         try {
-            $sql = DB::select("
-        WITH NATAL AS (
-            SELECT SERVIDOR.DS_CARGO_RH                                 as \"Cargo\",
-                   SERVIDOR.NM_SERVIDOR                                 as \"Nome\",
-                   (case
-                        when SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 then NULL
-                        else SERVIDOR.NR_CLASSIFICACAO_CONCURSO end)    as \"Classificacao Concurso Publico\",
-                   (case
-                        when SERVIDOR.NR_ANO_CONCURSO = 0 then NULL
-                        else SERVIDOR.NR_ANO_CONCURSO end)              as \"Ano Concurso Publico\",
-                   TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')        as \"Data de Nascimento\",
-                   SERVIDOR.CD_SERVIDOR                                 as \"APURACAO - Cod. Servidor\",
-                   SERVIDOR.ID_SERVIDOR                                 as \"APURACAO - ID Servidor\",
-                   TO_CHAR(SERVIDOR.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') as \"APURACAO - Data de Ingresso\",
-                   (CASE
-                        WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
-                        ELSE 0 END)                                     as \"APURACAO - Dias Afastados\",
-                   SERVIDOR.ID_TIPO_PROVIMENTO AS \"TIPO PROVIMENTO\",
-                   SERVIDOR.DS_TIPO_PROVIMENTO AS \"DESCRICAO PROVIMENTO\",
-
-                   SERVIDOR.ID_SERVIDOR
-                   ,           SERVIDOR.CD_CARGO_RH
-
-            FROM (SELECT DISTINCT S.CD_SERVIDOR,
-                S.NM_SERVIDOR,
-                S.ID_SERVIDOR,
-                C.CD_CARGO_RH,
-                C.DS_CARGO_RH,
-                CE.DT_INGRESSO_SERVIDOR,
-                CE.ID_CARGO,
-                (SELECT SUM((CASE
-                WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
-                THEN TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
-                ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
-                FROM AGU_RH.AFASTAMENTO A
-                INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
-                WHERE TA.CD_TIPO_AFASTAMENTO IN
-                      ('1005504', '3161', '5000', '3101', '3104', '3118', '3133', '3136', '3137', '3142')
-                AND A.DT_INICIO_AFASTAMENTO < TO_DATE('31122016', 'DD/MM/YYYY')
+            $sql = DB::select("SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
+       SERVIDOR.NM_SERVIDOR                                     AS NOME,
+       (CASE
+            WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL
+            ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END)        AS CLASSIFICACAO_CONCURSO_PUBLICO,
+       (CASE
+            WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL
+            ELSE SERVIDOR.NR_ANO_CONCURSO END)                  AS ANO_CONCURSO_PUBLICO,
+       TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')            AS DATA_NASCIMENTO,
+       ROUND((SERVIDOR_DTC.TMP_CARREIRA -
+              (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365,
+             4)                                                 AS TEMPO_DE_EFETIVO_EXERCICIO,
+       SERVIDOR.CD_SERVIDOR                                     AS APURACAO_CODIGO_SERVIDOR,
+       SERVIDOR.ID_SERVIDOR                                     AS APURACAO_ID_SERVIDOR,
+       TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS APURACAO_DATA_DE_INGRESSO,
+       (SERVIDOR_DTC.TMP_CARREIRA - (CASE
+                                         WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
+                                         ELSE 0 END))           AS APURACAO_DIAS_DE_EFET_EXERC,
+       (CASE
+            WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
+            ELSE 0 END)                                         AS APURACAO_DIAS_AFASTADOS,
+       SERVIDOR.ID_TIPO_PROVIMENTO                              AS ID_TIPO_DE_PROVIMENTO,
+       SERVIDOR.DS_TIPO_PROVIMENTO                              AS DESCRICAO_DO_PROVIMENTO
+FROM (SELECT S.NM_SERVIDOR,
+             S.CD_SERVIDOR,
+             S.ID_SERVIDOR,
+             C.CD_CARGO_RH,
+             C.DS_CARGO_RH,
+             P.ID_TIPO_PROVIMENTO,
+             (CASE
+                  WHEN S.ID_SERVIDOR IN (7913, 194492) THEN 'TRANSPOSICAO'
+                  WHEN S.ID_SERVIDOR IN (13766) THEN 'AJ - INTEGRACAO'
+                  ELSE TP.DS_TIPO_PROVIMENTO END)  AS DS_TIPO_PROVIMENTO,
+             (SELECT SUM((CASE
+                              WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('29-03-2021', 'DD/MM/YYYY')
+                                  THEN TO_DATE('29-03-2021', 'DD/MM/YYYY')
+                              ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
+              FROM AGU_RH.AFASTAMENTO A
+                       INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
+              WHERE TA.CD_TIPO_AFASTAMENTO IN
+                    ('1005504', '3161', '5000', '3101', '3104', '3118', '3133', '3136', '3137', '3142')
+                AND A.DT_INICIO_AFASTAMENTO < TO_DATE('29-03-2021', 'DD/MM/YYYY')
                 AND A.ID_SERVIDOR = S.ID_SERVIDOR) AS DIAS_AFASTADO,
-                DP.NR_CLASSIFICACAO_PNE            NR_CLASSIFICACAO_CONCURSO,
-                CE.NR_ANO_CONCURSO,
-                S.DT_NASCIMENTO,
-                TP.DS_TIPO_PROVIMENTO,
-                TP.ID_TIPO_PROVIMENTO
-                FROM AGU_RH.SERVIDOR S
-                INNER JOIN AGU_RH.DOCUMENTACAO D ON S.ID_SERVIDOR = D.ID_SERVIDOR AND D.ID_TIPO_DOCUMENTACAO = 1
-                INNER JOIN AGU_RH.DADO_FUNCIONAL DF ON S.ID_SERVIDOR = DF.ID_SERVIDOR
-                INNER JOIN AGU_RH.CARGO_EFETIVO CE ON S.ID_SERVIDOR = CE.ID_SERVIDOR
-                INNER JOIN AGU_RH.CARGO C ON CE.ID_CARGO = C.ID_CARGO
-                LEFT JOIN AGU_RH.MOVIMENTACAO M ON S.ID_SERVIDOR = M.ID_SERVIDOR AND M.DT_FINAL_MOVIMENTACAO IS NULL
-                LEFT JOIN AGU_RH.PROVIMENTO P ON P.ID_CARGO_EFETIVO = CE.ID_CARGO_EFETIVO
-                INNER JOIN AGU_RH.TIPO_PROVIMENTO TP ON TP.ID_TIPO_PROVIMENTO = P.ID_TIPO_PROVIMENTO
-                LEFT JOIN AGU_RH.DADO_PROMOCAO DP ON DP.ID_SERVIDOR = CE.ID_SERVIDOR
-                WHERE S.IN_STATUS_SERVIDOR = 1
-                AND CE.DT_OPERACAO_EXCLUSAO IS NULL
-                AND P.ID_PROVIMENTO NOT IN (SELECT ID_PROVIMENTO
-                FROM AGU_RH.VACANCIA
-                WHERE ID_PROVIMENTO = P.ID_PROVIMENTO
-                AND DT_OPERACAO_EXCLUSAO IS NULL)
-
-                {$tipoCargo}
-
-                 ) SERVIDOR
-            ORDER BY NR_CLASSIFICACAO_CONCURSO ASC, NR_ANO_CONCURSO DESC, DT_NASCIMENTO
-        ),
-             ANO_NOVO AS (
-
-                 SELECT
-                     ID_SERVIDOR
-                     ,CE.ID_SERVIDOR as \"APURACAO - ID Servidor\"
-                     ,MIN(CE.DT_INGRESSO_SERVIDOR) AS DT_INGRESSO_SERVIDOR
-                     ,(TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
-
-                 FROM AGU_RH.CARGO_EFETIVO CE
-                 WHERE DT_INGRESSO_SERVIDOR = ( SELECT MIN(DT_INGRESSO_SERVIDOR) FROM AGU_RH.CARGO_EFETIVO WHERE ID_SERVIDOR = CE.ID_SERVIDOR)
-                 GROUP BY CE.ID_SERVIDOR, CE.DT_INGRESSO_SERVIDOR
-                 ORDER BY CE.DT_INGRESSO_SERVIDOR ASC
-
-             ), CARNAVAL AS (
-                     SELECT ID_SERVIDOR
-                          , CE.ID_SERVIDOR                                                   as \"APURACAO - ID Servidor\"
-                          , MIN(CE.DT_INGRESSO_SERVIDOR)                                     AS DT_INGRESSO_SERVIDOR
-                          , (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - DT_INGRESSO_SERVIDOR) AS TMP_CARREIRA
-
-                     FROM AGU_RH.CARGO_EFETIVO CE
-                     WHERE DT_INGRESSO_SERVIDOR =
-                           (SELECT MAX(DT_INGRESSO_SERVIDOR) FROM AGU_RH.CARGO_EFETIVO WHERE ID_SERVIDOR = CE.ID_SERVIDOR)
-                     GROUP BY CE.ID_SERVIDOR, CE.DT_INGRESSO_SERVIDOR
-                     ORDER BY CE.DT_INGRESSO_SERVIDOR DESC
-                 ) 
-
-        SELECT NATAL.\"Cargo\"
-             , NATAL.\"Nome\"
-             ,CASE WHEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') <>  TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
-                       THEN 'SIM'
-            END AS DIFERENTE
-             --,TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - DATA DE INGRESSO\"
-             --,NATAL.\"APURACAO - Data de Ingresso\" AS \"NATAL\"
-             , CASE
-                   WHEN NATAL.CD_CARGO_RH IN ('410001', 'R410004', '011002', '410004', '414001', 'R414017', '414017')
-                       THEN TO_CHAR(ANO_NOVO.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
-                   ELSE
-                       TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY')
-             END AS \"APURACAO - DATA DE INGRESSO\"
-        
-             , NATAL.\"Classificacao Concurso Publico\"
-             , NATAL.\"Ano Concurso Publico\"
-             , NATAL.\"Data de Nascimento\"
-             , REPLACE(round((ANO_NOVO.TMP_CARREIRA - (CASE
-                                                           WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
-                                                               THEN NATAL.\"APURACAO - Dias Afastados\"
-                                                           ELSE 0
-            END)) / 365, 4), '.', '')                               AS \"Tempo de Efetivo Exercicio\"
-             , NATAL.\"APURACAO - Cod. Servidor\"
-             , NATAL.\"APURACAO - ID Servidor\"
-            , CASE
-                               WHEN NATAL.CD_CARGO_RH IN ('410001', 'R410004', '011002', '410004', '414001', 'R414017', '414017')
-                                   THEN
-                                   (ANO_NOVO.TMP_CARREIRA - (CASE
-                                                                 WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
-                                                                     THEN NATAL.\"APURACAO - Dias Afastados\"
-                                                                 ELSE 0 END)
-                                       )
-                               ELSE
-                                   (CARNAVAL.TMP_CARREIRA - (CASE
-                                                                 WHEN NATAL.\"APURACAO - Dias Afastados\" IS NOT NULL
-                                                                     THEN NATAL.\"APURACAO - Dias Afastados\"
-                                                                 ELSE 0 END)
-                                       )
-                         END AS \"APURACAO - Dias de Efet Exerc\"
-             , NATAL.\"APURACAO - Dias Afastados\"
-             , NATAL.\"TIPO PROVIMENTO\"
-             , NATAL.\"DESCRICAO PROVIMENTO\"
-             , NATAL.CD_CARGO_RH
-             ,TO_CHAR(CARNAVAL.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS TESTE
-        FROM NATAL
-                 LEFT JOIN ANO_NOVO ON ANO_NOVO.ID_SERVIDOR = NATAL.ID_SERVIDOR
-                 LEFT JOIN CARNAVAL ON CARNAVAL.ID_SERVIDOR = NATAL.ID_SERVIDOR
-        ORDER BY ANO_NOVO.DT_INGRESSO_SERVIDOR", []); //$dtExercicio, $request['tipoCargo']
+             DP.NR_CLASSIFICACAO_PNE                  NR_CLASSIFICACAO_CONCURSO,
+             CE.NR_ANO_CONCURSO,
+             S.DT_NASCIMENTO
+      FROM AGU_RH.SERVIDOR S
+               INNER JOIN AGU_RH.DOCUMENTACAO D ON S.ID_SERVIDOR = D.ID_SERVIDOR AND D.ID_TIPO_DOCUMENTACAO = 1
+               INNER JOIN AGU_RH.DADO_FUNCIONAL DF ON S.ID_SERVIDOR = DF.ID_SERVIDOR
+               INNER JOIN AGU_RH.CARGO_EFETIVO CE ON S.ID_SERVIDOR = CE.ID_SERVIDOR
+               INNER JOIN AGU_RH.CARGO C ON CE.ID_CARGO = C.ID_CARGO
+               LEFT JOIN AGU_RH.MOVIMENTACAO M ON S.ID_SERVIDOR = M.ID_SERVIDOR AND M.DT_FINAL_MOVIMENTACAO IS NULL
+               LEFT JOIN AGU_RH.PROVIMENTO P ON P.ID_CARGO_EFETIVO = CE.ID_CARGO_EFETIVO
+               LEFT JOIN AGU_RH.TIPO_PROVIMENTO TP ON TP.ID_TIPO_PROVIMENTO = P.ID_TIPO_PROVIMENTO
+               LEFT JOIN AGU_RH.DADO_PROMOCAO DP ON DP.ID_SERVIDOR = CE.ID_SERVIDOR
+      WHERE S.IN_STATUS_SERVIDOR = 1
+        AND CE.DT_OPERACAO_EXCLUSAO IS NULL
+        AND P.ID_PROVIMENTO NOT IN
+            (SELECT ID_PROVIMENTO
+             FROM AGU_RH.VACANCIA
+             WHERE ID_PROVIMENTO = P.ID_PROVIMENTO
+               AND DT_OPERACAO_EXCLUSAO IS NULL)
+        AND C.CD_CARGO_RH IN {$tipoCargo}) SERVIDOR,
+     (SELECT S1.ID_SERVIDOR,
+             MAX(CE1.DT_INGRESSO_SERVIDOR)                                             AS DT_INGRESSO_SERVIDOR,
+             (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - MAX(CE1.DT_INGRESSO_SERVIDOR)) AS TMP_CARREIRA
+      FROM AGU_RH.SERVIDOR S1
+               INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON S1.ID_SERVIDOR = CE1.ID_SERVIDOR
+               LEFT JOIN AGU_RH.PROVIMENTO P1 ON P1.ID_CARGO_EFETIVO = CE1.ID_CARGO_EFETIVO
+      WHERE S1.IN_STATUS_SERVIDOR = 1
+        AND CE1.DT_OPERACAO_EXCLUSAO IS NULL
+        AND P1.ID_PROVIMENTO NOT IN
+            (SELECT ID_PROVIMENTO
+             FROM AGU_RH.VACANCIA
+             WHERE ID_PROVIMENTO = P1.ID_PROVIMENTO
+               AND ID_TIPO_VACANCIA <> 16
+               AND ID_TIPO_VACANCIA <> 6
+               AND ID_TIPO_VACANCIA <> 19
+               AND DT_OPERACAO_EXCLUSAO IS NULL)
+      GROUP BY S1.ID_SERVIDOR) SERVIDOR_DTC
+WHERE SERVIDOR_DTC.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+GROUP BY SERVIDOR.DS_CARGO_RH, SERVIDOR.NM_SERVIDOR,
+         CASE WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END,
+         CASE WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_ANO_CONCURSO END,
+         TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY'), TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'YYYY/MM/DD'),
+         ROUND((SERVIDOR_DTC.TMP_CARREIRA -
+                (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365, 4),
+         SERVIDOR.CD_SERVIDOR, SERVIDOR.ID_SERVIDOR, TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
+         SERVIDOR_DTC.TMP_CARREIRA -
+         (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END),
+         CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END,
+         SERVIDOR.ID_TIPO_PROVIMENTO,
+         SERVIDOR.DS_TIPO_PROVIMENTO
+ORDER BY ROUND((SERVIDOR_DTC.TMP_CARREIRA - (CASE
+                                                 WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
+                                                 ELSE 0
+                                             END)) / 365, 4) DESC,
+         (CASE
+              WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0
+                  THEN NULL
+              ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO
+             END) ASC,
+         (CASE
+              WHEN SERVIDOR.NR_ANO_CONCURSO = 0
+                  THEN NULL
+              ELSE SERVIDOR.NR_ANO_CONCURSO
+             END) DESC,
+         TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'YYYY/MM/DD') ASC", []); //$dtExercicio, $request['tipoCargo']
 
             return $sql;
         } catch (\Exception $e) {
@@ -1004,7 +972,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
 
             DB::beginTransaction();
             $sql = DB::select("WITH dados as (
-                                    SELECT DISTINCT 
+                                    SELECT DISTINCT
                                                     DAD.DATA_INGRESSO                  AS \"Data Ingresso\",
                                                     TRIM(CAR.DESCRICAO_CARGO)            AS \"Descricao do Cargo\",
                                                     DAD.CODIGO_MATRICULA                 AS \"Matricula SIAPE\",
@@ -1081,9 +1049,9 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                      floor(MONTHS_BETWEEN(TO_DATE(dados.\"Data Ingresso\",'DD-MM-YYYY'), dados.DT_NASCIMENTO) / 12)  AS IDADE,
                                      dados.*
                                 from dados left join afast on afast.ID_SERVIDOR = dados.ID_SERVIDOR");
-          
+
             DB::commit();
-        
+
            return $sql;
         } catch (\Exception $e) {
             return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
