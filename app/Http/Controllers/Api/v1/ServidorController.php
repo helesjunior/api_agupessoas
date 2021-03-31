@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Documentacao;
 use App\Models\Servidor;
 use App\Models\Mvcsservidor;
+use App\Models\Pessoa;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use phpDocumentor\Reflection\Types\Integer;
@@ -30,6 +31,21 @@ class ServidorController extends Controller
         $servidores = Mvcsservidor::all();
 
         return json_encode($servidores);
+    }
+
+    /**
+     * Lista rol de responsáveis
+     *
+     * @see http://redminedti.agu.gov.br/redmine/issues/173
+     * @return array
+     */
+    public function listaRolResponsaveis()
+    {
+        $modelo = new Pessoa();
+
+        $responsaveis = $modelo->retornaRolResponsaveis();
+
+        return json_encode($responsaveis);
     }
 
 }

@@ -526,4 +526,108 @@ class Pessoa extends Base
         return DB::select($sql);
     }
 
+    /**
+     * Retorna listagem contendo Rol de Responsáveis
+     *
+     * @return array
+     * @author Willian Santos <willian.santos@agu.gov.br>
+     */
+    public function retornaRolResponsaveis()
+    {
+        $sql = "SELECT
+            *
+        FROM
+            (
+                SELECT
+                    CARGO_FUNCAO.CD_CARGO_FUNCAO                            AS CODIGO,
+                    '1 - Titular'											AS COMPETENCIA,
+                    CARGO_FUNCAO.DS_CARGO_FUNCAO                            AS FUNCAO,
+                    FUNCAO_GRATIFICADA.CD_FUNCAO_GRATIFICADA                AS NIVEL,
+                    SERVIDOR.NM_SERVIDOR                                    AS NOME,
+                    FD.DS_FORMA_DOCUMENTO||' '||
+                    NORMA.NR_DOCUMENTO_NORMA || ' de '||
+                    TO_CHAR(NORMA.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY')||'. '
+                    ||TP.DS_TIPO_PUBLICACAO||' Nº '
+                    || NORMA.NR_PUBLICACAO_NORMA||' de '||
+                    TO_CHAR(NORMA.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||'.'  AS ATO,
+                    '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
+                    ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'       AS CPF,
+                    SERVIDOR.NM_EMAIL                                       AS EMAIL,
+                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXERCICIO, 'DD/MM/YYYY')         AS DT_EXERCICIO,
+                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXONERACAO, 'DD/MM/YYYY')                       AS DT_EXONERACAO
+                FROM
+                    CARGO_FUNCAO
+                LEFT JOIN
+                    FUNCAO_COMISSIONADA ON FUNCAO_COMISSIONADA.ID_CARGO_FUNCAO = CARGO_FUNCAO.ID_CARGO_FUNCAO
+                LEFT JOIN
+                    SERVIDOR ON SERVIDOR.ID_SERVIDOR = FUNCAO_COMISSIONADA.ID_SERVIDOR
+                LEFT JOIN
+                    DOCUMENTACAO ON DOCUMENTACAO.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN
+                    NORMA ON NORMA.ID_NORMA = FUNCAO_COMISSIONADA.ID_NORMA_NOMEACAO
+                LEFT JOIN
+                    BASE_LEGAL BL ON BL.ID_BASE_LEGAL = NORMA.ID_BASE_LEGAL
+                LEFT JOIN
+                    FORMA_DOCUMENTO FD ON FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO
+                LEFT JOIN
+                    TIPO_PUBLICACAO TP ON TP.ID_TIPO_PUBLICACAO = NORMA.ID_TIPO_PUBLICACAO
+                LEFT JOIN
+                    FUNCAO_GRATIFICADA ON FUNCAO_GRATIFICADA.ID_FUNCAO_GRATIFICADA = CARGO_FUNCAO.ID_FUNCAO_GRATIFICADA
+                WHERE
+                    CARGO_FUNCAO.DT_EXTINCAO_CARGO IS NULL
+                    AND DOCUMENTACAO.ID_TIPO_DOCUMENTACAO = 1
+                    AND FUNCAO_COMISSIONADA.DT_EXERCICIO >= TO_DATE('2019-01-01', 'YYYY-MM-DD')
+
+                UNION
+
+                SELECT
+                   CARGO_FUNCAO.CD_CARGO_FUNCAO                            AS CODIGO,
+                   '2 - Substituto'										   AS COMPETENCIA,
+                   CARGO_FUNCAO.DS_CARGO_FUNCAO                            AS FUNCAO,
+                   FUNCAO_GRATIFICADA.CD_FUNCAO_GRATIFICADA                AS NIVEL,
+                   SERVIDOR.NM_SERVIDOR                                    AS NOME,
+                    FD.DS_FORMA_DOCUMENTO||' '||
+                    NORMA.NR_DOCUMENTO_NORMA || ' de '||
+                    TO_CHAR(NORMA.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY')||'. '
+                    ||TP.DS_TIPO_PUBLICACAO||' Nº '
+                    || NORMA.NR_PUBLICACAO_NORMA||' de '||
+                    TO_CHAR(NORMA.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||'.'     AS ATO,
+                    '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
+                    ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'      AS CPF,
+                   SERVIDOR.NM_EMAIL                                       AS EMAIL,
+                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_INICIO_SUBSTITUICAO, 'DD/MM/YYYY')     AS DT_EXERCICIO,
+                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_FINAL_SUBSTITUICAO, 'DD/MM/YYYY')         AS DT_EXONERACAO
+                FROM
+                    CARGO_FUNCAO
+                LEFT JOIN
+                    FUNCAO_COMISSIONADA_SUBST ON FUNCAO_COMISSIONADA_SUBST.ID_CARGO_FUNCAO = CARGO_FUNCAO.ID_CARGO_FUNCAO
+                LEFT JOIN
+                    SERVIDOR ON SERVIDOR.ID_SERVIDOR = FUNCAO_COMISSIONADA_SUBST.ID_SERVIDOR_SUBSTITUTO
+                LEFT JOIN
+                    DOCUMENTACAO ON DOCUMENTACAO.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN
+                    NORMA ON NORMA.ID_NORMA = FUNCAO_COMISSIONADA_SUBST.ID_NORMA_INICIO_SUBST
+                LEFT JOIN
+                    BASE_LEGAL BL ON BL.ID_BASE_LEGAL = NORMA.ID_BASE_LEGAL
+                LEFT JOIN
+                    FORMA_DOCUMENTO FD ON FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO
+                LEFT JOIN
+                    TIPO_PUBLICACAO TP ON TP.ID_TIPO_PUBLICACAO = NORMA.ID_TIPO_PUBLICACAO
+                LEFT JOIN
+                    FUNCAO_GRATIFICADA ON FUNCAO_GRATIFICADA.ID_FUNCAO_GRATIFICADA = CARGO_FUNCAO.ID_FUNCAO_GRATIFICADA
+                WHERE
+                    CARGO_FUNCAO.DT_EXTINCAO_CARGO IS NULL
+                    AND DOCUMENTACAO.ID_TIPO_DOCUMENTACAO = 1
+                    AND TRUNC(FUNCAO_COMISSIONADA_SUBST.DT_INICIO_SUBSTITUICAO) >= TO_DATE('2019-01-01', 'YYYY-MM-DD')
+            ) CARGO_COMPETENCIA
+        ORDER BY
+            CARGO_COMPETENCIA.CODIGO,
+            CARGO_COMPETENCIA.FUNCAO,
+            CARGO_COMPETENCIA.COMPETENCIA
+            ";
+
+        return DB::select($sql);
+
+    }
+
 }
