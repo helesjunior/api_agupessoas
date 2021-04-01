@@ -531,7 +531,8 @@ FROM (
         }
 
         try {
-            $sql = DB::select("SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
+            $sql = DB::select("
+SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
        SERVIDOR.NM_SERVIDOR                                     AS NOME,
        (CASE
             WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL
@@ -570,7 +571,7 @@ FROM (SELECT S.NM_SERVIDOR,
                               ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
               FROM AGU_RH.AFASTAMENTO A
                        INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
-              WHERE TA.CD_TIPO_AFASTAMENTO IN {$tipoCargo}
+              WHERE TA.CD_TIPO_AFASTAMENTO IN ('1005504', '3161', '5000', '3101', '3104', '3118', '3133', '3136', '3137', '3142')
                 AND A.DT_INICIO_AFASTAMENTO < TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
                 AND A.ID_SERVIDOR = S.ID_SERVIDOR) AS DIAS_AFASTADO,
              DP.NR_CLASSIFICACAO_PNE                  NR_CLASSIFICACAO_CONCURSO,
