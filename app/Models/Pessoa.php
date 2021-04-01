@@ -533,29 +533,30 @@ FROM (
         }
 
         try {
-            $sql = DB::select("SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
+            $sql = DB::select("
+SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
        SERVIDOR.NM_SERVIDOR                                     AS NOME,
        (CASE
             WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL
-            ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END)        AS CLASSIFICAÇÃO_CONCURSO_PUBLICO,
+            ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END)        AS \"Classificacao Concurso Publico\",
        (CASE
             WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL
-            ELSE SERVIDOR.NR_ANO_CONCURSO END)                  AS ANO_CONCURSO_PÚBLICO,
-       TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')            AS DATA_NASCIMENTO,
+            ELSE SERVIDOR.NR_ANO_CONCURSO END)                  AS \"Ano Concurso Publico\",
+       TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')            AS \"Data de Nascimento\",
        ROUND((SERVIDOR_DTC.TMP_CARREIRA -
               (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365,
-             4)                                                 AS TEMPO_DE_EFETIVO_EXERCICIO,
-       SERVIDOR.CD_SERVIDOR                                     AS APURACAO_CODIGO_SERVIDOR,
-       SERVIDOR.ID_SERVIDOR                                     AS APURACAO_ID_SERVIDOR,
-       TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS APURACAO_DATA_DE_INGRESSO,
+             4)                                                 AS \"Tempo de Efetivo Exercicio\",
+       SERVIDOR.CD_SERVIDOR                                     AS \"APURACAO - Cod. Servidor\",
+       SERVIDOR.ID_SERVIDOR                                     AS \"APURACAO - ID Servidor\",
+       TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - Data de Ingresso\",
        (SERVIDOR_DTC.TMP_CARREIRA - (CASE
                                          WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
-                                         ELSE 0 END))           AS APURACAO_DIAS_DE_EFET_EXERC,
+                                         ELSE 0 END))           AS \"APURACAO - Dias de Efet Exerc\",
        (CASE
             WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
-            ELSE 0 END)                                         AS APURACAO_DIAS_AFASTADOS,
-       SERVIDOR.ID_TIPO_PROVIMENTO                              AS ID_TIPO_DE_PROVIMENTO,
-       SERVIDOR.DS_TIPO_PROVIMENTO                              AS DESCRICAO_DO_PROVIMENTO
+            ELSE 0 END)                                         AS  \"APURACAO - Dias Afastados\",
+       SERVIDOR.ID_TIPO_PROVIMENTO                              AS \"TIPO PROVIMENTO\",
+       SERVIDOR.DS_TIPO_PROVIMENTO                              AS \"DESCRICAO PROVIMENTO\"
 FROM (SELECT S.NM_SERVIDOR,
              S.CD_SERVIDOR,
              S.ID_SERVIDOR,
@@ -595,7 +596,7 @@ FROM (SELECT S.NM_SERVIDOR,
              FROM AGU_RH.VACANCIA
              WHERE ID_PROVIMENTO = P.ID_PROVIMENTO
                AND DT_OPERACAO_EXCLUSAO IS NULL)
-        AND C.CD_CARGO_RH IN ('410001', '410004', '414001', '414017')) SERVIDOR,
+        AND C.CD_CARGO_RH IN ('R408001', '408001', 'R408002', '408002')) SERVIDOR,
      (SELECT S1.ID_SERVIDOR,
              MIN(CE1.DT_INGRESSO_SERVIDOR)                               AS DT_INGRESSO_SERVIDOR,
              (TO_DATE(
