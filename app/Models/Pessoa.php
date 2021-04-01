@@ -523,9 +523,11 @@ FROM (
         if($request['tipoCargo'] == 'adv' || $request['tipoCargo'] == 'advogado') {
             /*Advogado da União*/
             $tipoCargo = "('410001', '410004', '414001', '414017')";
+            $quantidade = 'MIN';
         } elseif ($request['tipoCargo'] ==='proc' || $request['tipoCargo'] ==='procurador') {
             /*Procurador Federal*/
             $tipoCargo = "('R408001', '408001', 'R408002', '408002')";
+            $quantidade = 'MAX';
         } else {
             return 'Tipo de cargo inválido, favor verificar valor informado.';
         }
@@ -595,8 +597,8 @@ FROM (SELECT S.NM_SERVIDOR,
                AND DT_OPERACAO_EXCLUSAO IS NULL)
         AND C.CD_CARGO_RH IN {$tipoCargo}) SERVIDOR,
      (SELECT S1.ID_SERVIDOR,
-             MAX(CE1.DT_INGRESSO_SERVIDOR)                                             AS DT_INGRESSO_SERVIDOR,
-             (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - MAX(CE1.DT_INGRESSO_SERVIDOR)) AS TMP_CARREIRA
+              {$quantidade}(CE1.DT_INGRESSO_SERVIDOR)                                             AS DT_INGRESSO_SERVIDOR,
+             (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 -  {$quantidade}(CE1.DT_INGRESSO_SERVIDOR)) AS TMP_CARREIRA
       FROM AGU_RH.SERVIDOR S1
                INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON S1.ID_SERVIDOR = CE1.ID_SERVIDOR
                LEFT JOIN AGU_RH.PROVIMENTO P1 ON P1.ID_CARGO_EFETIVO = CE1.ID_CARGO_EFETIVO
