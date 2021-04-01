@@ -1004,13 +1004,15 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                         LEFT JOIN (
                                         SELECT U.ID_SERVIDOR,
                                         U.ULTIMA,
-                                        U.ID_LOTACAO_EXERCICIO
+                                        U.ID_LOTACAO_EXERCICIO,
+                                        U.DT_INICIO_MOVIMENTACAO
                                         FROM (
                                         SELECT MAX(ID_MOVIMENTACAO) ULTIMA,
                                         ID_SERVIDOR,
-                                        ID_LOTACAO_EXERCICIO
+                                        ID_LOTACAO_EXERCICIO,
+                                        DT_INICIO_MOVIMENTACAO
                                         FROM MOVIMENTACAO
-                                        GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO
+                                        GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO, DT_INICIO_MOVIMENTACAO
                                         ) U
                                         LEFT JOIN
                                         MOVIMENTACAO N ON
@@ -1039,6 +1041,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                         ) LT ON
                                         LT.ID_SERVIDOR = SER.ID_SERVIDOR
                                     WHERE DAD.id_rh = 1
+                                      AND TO_DATE(DAD.DATA_INGRESSO,'DD-MM-YYYY') = MOV.DT_INICIO_MOVIMENTACAO
                                       and CAR.ANO_CONCURSO is not null
                                 ),
                                      afast as (
