@@ -1078,7 +1078,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                          TRIM(DAD.NOME_SERVIDOR)    AS \"NOME_DO_SERVIDOR\",
                                          DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
 
-                                         TO_CHAR(DAD.DATA_RESCISAO, 'DD/MM/YYYY') AS \"DATA_RESCISAO\",
+                                         DAD.DATA_RESCISAO,
                                          SER.DT_NASCIMENTO,
                                          DAD.RESCICAO_RAIS    AS \"RAIS_RESCISAO_DESCRICAO\",
                                          CAR.ANO_CONCURSO      AS \"CONCURSO_ANO\",
@@ -1136,14 +1136,13 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
         SELECT ID_SERVIDOR,MAX(DT_FIM_AFASTAMENTO) AS DT_FIM_AFASTAMENTO FROM AGU_RH.AFASTAMENTO GROUP BY ID_SERVIDOR
         )
         SELECT DISTINCT
-		 TO_CHAR(AFAST.DT_FIM_AFASTAMENTO, 'DD/MM/YYYY') AS DATA_AFASTAMENTO,
-          floor(MONTHS_BETWEEN(AFAST.DT_FIM_AFASTAMENTO, DT_NASCIMENTO) / 12)  AS IDADE,
+		 floor(MONTHS_BETWEEN(DADOS.DATA_RESCISAO, DT_NASCIMENTO) / 12)  AS IDADE,
+		 TO_CHAR(DADOS.DATA_RESCISAO, 'DD/MM/YYYY') AS DT_RESCISAO,
               TO_CHAR(DADOS.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO,
             DADOS.*
 
         FROM DADOS LEFT JOIN AFAST ON AFAST.ID_SERVIDOR = DADOS.ID_SERVIDOR");
             DB::commit();
-
             return $sql;
         } catch (\Exception $e) {
             RETURN $e->getMessage();
