@@ -523,15 +523,18 @@ FROM (
         if($request['tipoCargo'] == 'adv' || $request['tipoCargo'] == 'advogado') {
             /*Advogado da União*/
             $tipoCargo = "('410001', '410004', '414001', '414017')";
+            $quantidade = 'MIN';
         } elseif ($request['tipoCargo'] ==='proc' || $request['tipoCargo'] ==='procurador') {
             /*Procurador Federal*/
             $tipoCargo = "('R408001', '408001', 'R408002', '408002')";
+            $quantidade = 'MAX';
         } else {
             return 'Tipo de cargo inválido, favor verificar valor informado.';
         }
 
         try {
-            $sql = DB::select("SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
+            $sql = DB::select("
+SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
        SERVIDOR.NM_SERVIDOR                                     AS NOME,
        (CASE
             WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL
@@ -554,91 +557,93 @@ FROM (
             ELSE 0 END)                                         AS  \"APURACAO - Dias Afastados\",
        SERVIDOR.ID_TIPO_PROVIMENTO                              AS \"TIPO PROVIMENTO\",
        SERVIDOR.DS_TIPO_PROVIMENTO                              AS \"DESCRICAO PROVIMENTO\"
-FROM (SELECT S.NM_SERVIDOR,
-             S.CD_SERVIDOR,
-             S.ID_SERVIDOR,
-             C.CD_CARGO_RH,
-             C.DS_CARGO_RH,
-             P.ID_TIPO_PROVIMENTO,
-             (CASE
-                  WHEN S.ID_SERVIDOR IN (7913, 194492) THEN 'TRANSPOSICAO'
-                  WHEN S.ID_SERVIDOR IN (13766) THEN 'AJ - INTEGRACAO'
-                  ELSE TP.DS_TIPO_PROVIMENTO END)  AS DS_TIPO_PROVIMENTO,
-             (SELECT SUM((CASE
-                              WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
-                                  THEN TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
-                              ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
-              FROM AGU_RH.AFASTAMENTO A
-                       INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
-              WHERE TA.CD_TIPO_AFASTAMENTO IN {$tipoCargo}
-                AND A.DT_INICIO_AFASTAMENTO < TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
-                AND A.ID_SERVIDOR = S.ID_SERVIDOR) AS DIAS_AFASTADO,
-             DP.NR_CLASSIFICACAO_PNE                  NR_CLASSIFICACAO_CONCURSO,
-             CE.NR_ANO_CONCURSO,
-             S.DT_NASCIMENTO
-      FROM AGU_RH.SERVIDOR S
-               INNER JOIN AGU_RH.DOCUMENTACAO D ON S.ID_SERVIDOR = D.ID_SERVIDOR AND D.ID_TIPO_DOCUMENTACAO = 1
-               INNER JOIN AGU_RH.DADO_FUNCIONAL DF ON S.ID_SERVIDOR = DF.ID_SERVIDOR
-               INNER JOIN AGU_RH.CARGO_EFETIVO CE ON S.ID_SERVIDOR = CE.ID_SERVIDOR
-               INNER JOIN AGU_RH.CARGO C ON CE.ID_CARGO = C.ID_CARGO
-               LEFT JOIN AGU_RH.MOVIMENTACAO M ON S.ID_SERVIDOR = M.ID_SERVIDOR AND M.DT_FINAL_MOVIMENTACAO IS NULL
-               LEFT JOIN AGU_RH.PROVIMENTO P ON P.ID_CARGO_EFETIVO = CE.ID_CARGO_EFETIVO
-               LEFT JOIN AGU_RH.TIPO_PROVIMENTO TP ON TP.ID_TIPO_PROVIMENTO = P.ID_TIPO_PROVIMENTO
-               LEFT JOIN AGU_RH.DADO_PROMOCAO DP ON DP.ID_SERVIDOR = CE.ID_SERVIDOR
-      WHERE S.IN_STATUS_SERVIDOR = 1
+FROM 
+    (SELECT S.NM_SERVIDOR,
+        S.CD_SERVIDOR,
+        S.ID_SERVIDOR,
+        C.CD_CARGO_RH,
+        C.DS_CARGO_RH,
+        P.ID_TIPO_PROVIMENTO,
+            (CASE
+                WHEN S.ID_SERVIDOR IN(7913, 194492) THEN 'TRANSPOSICAO'
+                WHEN S.ID_SERVIDOR IN(13766) THEN 'AJ - INTEGRACAO'
+                ELSE TP.DS_TIPO_PROVIMENTO END)
+        AS DS_TIPO_PROVIMENTO,
+            (SELECT 
+                SUM(
+                    (CASE
+                        WHEN A.DT_FIM_AFASTAMENTO > TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') THEN TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
+                        ELSE A.DT_FIM_AFASTAMENTO END + 1) - A.DT_INICIO_AFASTAMENTO)
+            FROM AGU_RH.AFASTAMENTO A
+                INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON A.ID_TIPO_AFASTAMENTO = TA.ID_TIPO_AFASTAMENTO
+            WHERE TA.CD_TIPO_AFASTAMENTO IN ('1005504', '3161', '5000', '3101', '3104', '3118', '3133', '3136', '3137', '3142')
+                AND A.DT_INICIO_AFASTAMENTO<TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY')
+                AND A.ID_SERVIDOR = S.ID_SERVIDOR)
+        AS DIAS_AFASTADO,
+        DP.NR_CLASSIFICACAO_PNE NR_CLASSIFICACAO_CONCURSO,
+        CE.NR_ANO_CONCURSO,
+        S.DT_NASCIMENTO
+    FROM AGU_RH.SERVIDOR S
+        INNER JOIN AGU_RH.DOCUMENTACAO D ON S.ID_SERVIDOR = D.ID_SERVIDOR AND D.ID_TIPO_DOCUMENTACAO = 1
+        INNER JOIN AGU_RH.DADO_FUNCIONAL DF ON S.ID_SERVIDOR = DF.ID_SERVIDOR
+        INNER JOIN AGU_RH.CARGO_EFETIVO CE ON S.ID_SERVIDOR = CE.ID_SERVIDOR
+        INNER JOIN AGU_RH.CARGO C ON CE.ID_CARGO = C.ID_CARGO
+        LEFT JOIN AGU_RH.MOVIMENTACAO M ON S.ID_SERVIDOR = M.ID_SERVIDOR AND M.DT_FINAL_MOVIMENTACAO IS NULL
+        LEFT JOIN AGU_RH.PROVIMENTO P ON P.ID_CARGO_EFETIVO = CE.ID_CARGO_EFETIVO
+        LEFT JOIN AGU_RH.TIPO_PROVIMENTO TP ON TP.ID_TIPO_PROVIMENTO = P.ID_TIPO_PROVIMENTO
+        LEFT JOIN  AGU_RH.DADO_PROMOCAO DP ON DP.ID_SERVIDOR = CE.ID_SERVIDOR
+    WHERE
+        S.IN_STATUS_SERVIDOR = 1
         AND CE.DT_OPERACAO_EXCLUSAO IS NULL
         AND P.ID_PROVIMENTO NOT IN
-            (SELECT ID_PROVIMENTO
-             FROM AGU_RH.VACANCIA
-             WHERE ID_PROVIMENTO = P.ID_PROVIMENTO
-               AND DT_OPERACAO_EXCLUSAO IS NULL)
-        AND C.CD_CARGO_RH IN {$tipoCargo}) SERVIDOR,
-     (SELECT S1.ID_SERVIDOR,
-             MAX(CE1.DT_INGRESSO_SERVIDOR)                                             AS DT_INGRESSO_SERVIDOR,
-             (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - MAX(CE1.DT_INGRESSO_SERVIDOR)) AS TMP_CARREIRA
-      FROM AGU_RH.SERVIDOR S1
-               INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON S1.ID_SERVIDOR = CE1.ID_SERVIDOR
-               LEFT JOIN AGU_RH.PROVIMENTO P1 ON P1.ID_CARGO_EFETIVO = CE1.ID_CARGO_EFETIVO
-      WHERE S1.IN_STATUS_SERVIDOR = 1
+            (SELECT
+                ID_PROVIMENTO FROM AGU_RH.VACANCIA
+             WHERE
+                ID_PROVIMENTO = P.ID_PROVIMENTO
+                AND DT_OPERACAO_EXCLUSAO IS NULL)
+        AND C.CD_CARGO_RH IN {$tipoCargo}
+    ) SERVIDOR,
+    (SELECT S1.ID_SERVIDOR,
+        {$quantidade}(CE1.DT_INGRESSO_SERVIDOR ) AS DT_INGRESSO_SERVIDOR,
+        (TO_DATE('{$request['dataExercicio']}', 'DD/MM/YYYY') + 1 - {$quantidade}(CE1.DT_INGRESSO_SERVIDOR)) AS TMP_CARREIRA
+    FROM AGU_RH.SERVIDOR S1
+        INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON S1.ID_SERVIDOR = CE1.ID_SERVIDOR
+        LEFT JOIN AGU_RH.PROVIMENTO P1 ON P1.ID_CARGO_EFETIVO = CE1.ID_CARGO_EFETIVO
+    WHERE S1.IN_STATUS_SERVIDOR = 1
         AND CE1.DT_OPERACAO_EXCLUSAO IS NULL
         AND P1.ID_PROVIMENTO NOT IN
             (SELECT ID_PROVIMENTO
-             FROM AGU_RH.VACANCIA
-             WHERE ID_PROVIMENTO = P1.ID_PROVIMENTO
-               AND ID_TIPO_VACANCIA <> 16
-               AND ID_TIPO_VACANCIA <> 6
-               AND ID_TIPO_VACANCIA <> 19
-               AND DT_OPERACAO_EXCLUSAO IS NULL)
-      GROUP BY S1.ID_SERVIDOR) SERVIDOR_DTC
-WHERE SERVIDOR_DTC.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
-GROUP BY SERVIDOR.DS_CARGO_RH, SERVIDOR.NM_SERVIDOR,
-         CASE WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END,
-         CASE WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_ANO_CONCURSO END,
-         TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY'), TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'YYYY/MM/DD'),
-         ROUND((SERVIDOR_DTC.TMP_CARREIRA -
-                (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365, 4),
-         SERVIDOR.CD_SERVIDOR, SERVIDOR.ID_SERVIDOR, TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
-         SERVIDOR_DTC.TMP_CARREIRA -
-         (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END),
-         CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END,
-         SERVIDOR.ID_TIPO_PROVIMENTO,
-         SERVIDOR.DS_TIPO_PROVIMENTO
-ORDER BY ROUND((SERVIDOR_DTC.TMP_CARREIRA - (CASE
-                                                 WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO
-                                                 ELSE 0
-                                             END)) / 365, 4) DESC,
-         (CASE
-              WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0
-                  THEN NULL
-              ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO
-             END) ASC,
-         (CASE
-              WHEN SERVIDOR.NR_ANO_CONCURSO = 0
-                  THEN NULL
-              ELSE SERVIDOR.NR_ANO_CONCURSO
-             END) DESC,
-         TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'YYYY/MM/DD') ASC", []); //$dtExercicio, $request['tipoCargo']
-
+            FROM AGU_RH.VACANCIA
+            WHERE ID_PROVIMENTO = P1.ID_PROVIMENTO
+                AND ID_TIPO_VACANCIA <> 16
+                AND ID_TIPO_VACANCIA <> 6
+                AND ID_TIPO_VACANCIA <> 19
+                AND DT_OPERACAO_EXCLUSAO IS NULL)
+            GROUP BY  S1.ID_SERVIDOR) SERVIDOR_DTC
+                WHERE SERVIDOR_DTC.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                GROUP BY SERVIDOR.DS_CARGO_RH,
+                    SERVIDOR.NM_SERVIDOR,
+                    CASE WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END,
+                    CASE WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_ANO_CONCURSO END,
+                    TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY'),
+                    TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'YYYY/MM/DD'),
+                    ROUND(
+                        (SERVIDOR_DTC.TMP_CARREIRA - (
+                            CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END
+                            )) / 365, 4),
+                    SERVIDOR.CD_SERVIDOR,
+                    SERVIDOR.ID_SERVIDOR,
+                    TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
+                    SERVIDOR_DTC.TMP_CARREIRA - (
+                            CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END
+                        ),
+                    CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END,
+                    SERVIDOR.ID_TIPO_PROVIMENTO,
+                    SERVIDOR.DS_TIPO_PROVIMENTO
+                ORDER BY ROUND((SERVIDOR_DTC.TMP_CARREIRA - (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365, 4) DESC,
+                    (CASE WHEN SERVIDOR.NR_CLASSIFICACAO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_CLASSIFICACAO_CONCURSO END) ASC,
+                    (CASE WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL ELSE SERVIDOR.NR_ANO_CONCURSO END) DESC,
+                    TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'YYYY/MM/DD') ASC", []); //$dtExercicio, $request['tipoCargo']
             return $sql;
         } catch (\Exception $e) {
             return $e->getMessage();
@@ -1004,13 +1009,15 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                         LEFT JOIN (
                                         SELECT U.ID_SERVIDOR,
                                         U.ULTIMA,
-                                        U.ID_LOTACAO_EXERCICIO
+                                        U.ID_LOTACAO_EXERCICIO,
+                                        U.DT_INICIO_MOVIMENTACAO
                                         FROM (
                                         SELECT MAX(ID_MOVIMENTACAO) ULTIMA,
                                         ID_SERVIDOR,
-                                        ID_LOTACAO_EXERCICIO
+                                        ID_LOTACAO_EXERCICIO,
+                                        DT_INICIO_MOVIMENTACAO
                                         FROM MOVIMENTACAO
-                                        GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO
+                                        GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO, DT_INICIO_MOVIMENTACAO
                                         ) U
                                         LEFT JOIN
                                         MOVIMENTACAO N ON
@@ -1039,6 +1046,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                                         ) LT ON
                                         LT.ID_SERVIDOR = SER.ID_SERVIDOR
                                     WHERE DAD.id_rh = 1
+                                      AND TO_DATE(DAD.DATA_INGRESSO,'DD-MM-YYYY') = MOV.DT_INICIO_MOVIMENTACAO
                                       and CAR.ANO_CONCURSO is not null
                                 ),
                                      afast as (
@@ -1511,6 +1519,110 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
         $sql .= '    SV.NM_SERVIDOR ';
 
         return DB::select($sql);
+    }
+
+    /**
+     * Retorna listagem contendo Rol de Responsáveis
+     *
+     * @return array
+     * @author Willian Santos <willian.santos@agu.gov.br>
+     */
+    public function retornaRolResponsaveis()
+    {
+        $sql = "SELECT
+            *
+        FROM
+            (
+                SELECT
+                    CARGO_FUNCAO.CD_CARGO_FUNCAO                            AS CODIGO,
+                    '1 - Titular'											AS COMPETENCIA,
+                    CARGO_FUNCAO.DS_CARGO_FUNCAO                            AS FUNCAO,
+                    FUNCAO_GRATIFICADA.CD_FUNCAO_GRATIFICADA                AS NIVEL,
+                    SERVIDOR.NM_SERVIDOR                                    AS NOME,
+                    FD.DS_FORMA_DOCUMENTO||' '||
+                    NORMA.NR_DOCUMENTO_NORMA || ' de '||
+                    TO_CHAR(NORMA.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY')||'. '
+                    ||TP.DS_TIPO_PUBLICACAO||' Nº '
+                    || NORMA.NR_PUBLICACAO_NORMA||' de '||
+                    TO_CHAR(NORMA.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||'.'  AS ATO,
+                    '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
+                    ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'       AS CPF,
+                    SERVIDOR.NM_EMAIL                                       AS EMAIL,
+                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXERCICIO, 'DD/MM/YYYY')         AS DT_EXERCICIO,
+                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXONERACAO, 'DD/MM/YYYY')                       AS DT_EXONERACAO
+                FROM
+                    CARGO_FUNCAO
+                LEFT JOIN
+                    FUNCAO_COMISSIONADA ON FUNCAO_COMISSIONADA.ID_CARGO_FUNCAO = CARGO_FUNCAO.ID_CARGO_FUNCAO
+                LEFT JOIN
+                    SERVIDOR ON SERVIDOR.ID_SERVIDOR = FUNCAO_COMISSIONADA.ID_SERVIDOR
+                LEFT JOIN
+                    DOCUMENTACAO ON DOCUMENTACAO.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN
+                    NORMA ON NORMA.ID_NORMA = FUNCAO_COMISSIONADA.ID_NORMA_NOMEACAO
+                LEFT JOIN
+                    BASE_LEGAL BL ON BL.ID_BASE_LEGAL = NORMA.ID_BASE_LEGAL
+                LEFT JOIN
+                    FORMA_DOCUMENTO FD ON FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO
+                LEFT JOIN
+                    TIPO_PUBLICACAO TP ON TP.ID_TIPO_PUBLICACAO = NORMA.ID_TIPO_PUBLICACAO
+                LEFT JOIN
+                    FUNCAO_GRATIFICADA ON FUNCAO_GRATIFICADA.ID_FUNCAO_GRATIFICADA = CARGO_FUNCAO.ID_FUNCAO_GRATIFICADA
+                WHERE
+                    CARGO_FUNCAO.DT_EXTINCAO_CARGO IS NULL
+                    AND DOCUMENTACAO.ID_TIPO_DOCUMENTACAO = 1
+                    AND FUNCAO_COMISSIONADA.DT_EXERCICIO >= TO_DATE('2019-01-01', 'YYYY-MM-DD')
+
+                UNION
+
+                SELECT
+                   CARGO_FUNCAO.CD_CARGO_FUNCAO                            AS CODIGO,
+                   '2 - Substituto'										   AS COMPETENCIA,
+                   CARGO_FUNCAO.DS_CARGO_FUNCAO                            AS FUNCAO,
+                   FUNCAO_GRATIFICADA.CD_FUNCAO_GRATIFICADA                AS NIVEL,
+                   SERVIDOR.NM_SERVIDOR                                    AS NOME,
+                    FD.DS_FORMA_DOCUMENTO||' '||
+                    NORMA.NR_DOCUMENTO_NORMA || ' de '||
+                    TO_CHAR(NORMA.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY')||'. '
+                    ||TP.DS_TIPO_PUBLICACAO||' Nº '
+                    || NORMA.NR_PUBLICACAO_NORMA||' de '||
+                    TO_CHAR(NORMA.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||'.'     AS ATO,
+                    '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
+                    ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'      AS CPF,
+                   SERVIDOR.NM_EMAIL                                       AS EMAIL,
+                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_INICIO_SUBSTITUICAO, 'DD/MM/YYYY')     AS DT_EXERCICIO,
+                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_FINAL_SUBSTITUICAO, 'DD/MM/YYYY')         AS DT_EXONERACAO
+                FROM
+                    CARGO_FUNCAO
+                LEFT JOIN
+                    FUNCAO_COMISSIONADA_SUBST ON FUNCAO_COMISSIONADA_SUBST.ID_CARGO_FUNCAO = CARGO_FUNCAO.ID_CARGO_FUNCAO
+                LEFT JOIN
+                    SERVIDOR ON SERVIDOR.ID_SERVIDOR = FUNCAO_COMISSIONADA_SUBST.ID_SERVIDOR_SUBSTITUTO
+                LEFT JOIN
+                    DOCUMENTACAO ON DOCUMENTACAO.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN
+                    NORMA ON NORMA.ID_NORMA = FUNCAO_COMISSIONADA_SUBST.ID_NORMA_INICIO_SUBST
+                LEFT JOIN
+                    BASE_LEGAL BL ON BL.ID_BASE_LEGAL = NORMA.ID_BASE_LEGAL
+                LEFT JOIN
+                    FORMA_DOCUMENTO FD ON FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO
+                LEFT JOIN
+                    TIPO_PUBLICACAO TP ON TP.ID_TIPO_PUBLICACAO = NORMA.ID_TIPO_PUBLICACAO
+                LEFT JOIN
+                    FUNCAO_GRATIFICADA ON FUNCAO_GRATIFICADA.ID_FUNCAO_GRATIFICADA = CARGO_FUNCAO.ID_FUNCAO_GRATIFICADA
+                WHERE
+                    CARGO_FUNCAO.DT_EXTINCAO_CARGO IS NULL
+                    AND DOCUMENTACAO.ID_TIPO_DOCUMENTACAO = 1
+                    AND TRUNC(FUNCAO_COMISSIONADA_SUBST.DT_INICIO_SUBSTITUICAO) >= TO_DATE('2019-01-01', 'YYYY-MM-DD')
+            ) CARGO_COMPETENCIA
+        ORDER BY
+            CARGO_COMPETENCIA.CODIGO,
+            CARGO_COMPETENCIA.FUNCAO,
+            CARGO_COMPETENCIA.COMPETENCIA
+            ";
+
+        return DB::select($sql);
+
     }
 
 }
