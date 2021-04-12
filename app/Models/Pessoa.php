@@ -1138,6 +1138,7 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
                  AND DADO_FUNCIONAL.DT_RESCISAO IS NOT NULL
              ORDER BY 2");
             DB::commit();
+
             return $sql;
         } catch (\Exception $e) {
             RETURN $e->getMessage();
