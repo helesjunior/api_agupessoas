@@ -1074,10 +1074,8 @@ where "DOCUMENTACAO"."NR_DOCUMENTACAO" = ?
     public function retornaRescisao()
     {
 
-        //AS \"RAIS_RESCISAO_DESCRICAO\",
         ini_set("memory_limit", "512M");
         try {
-
             DB::beginTransaction();
             $sql = DB::select("SELECT DISTINCT
                 LPAD(D.NR_DOCUMENTACAO,11,0) CPF,
