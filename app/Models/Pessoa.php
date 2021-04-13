@@ -543,9 +543,10 @@ SELECT SERVIDOR.DS_CARGO_RH                                     AS CARGO,
             WHEN SERVIDOR.NR_ANO_CONCURSO = 0 THEN NULL
             ELSE SERVIDOR.NR_ANO_CONCURSO END)                  AS \"Ano Concurso Publico\",
        TO_CHAR(SERVIDOR.DT_NASCIMENTO, 'DD/MM/YYYY')            AS \"Data de Nascimento\",
-       ROUND((SERVIDOR_DTC.TMP_CARREIRA -
+       
+       REPLACE(ROUND((SERVIDOR_DTC.TMP_CARREIRA -
               (CASE WHEN SERVIDOR.DIAS_AFASTADO IS NOT NULL THEN SERVIDOR.DIAS_AFASTADO ELSE 0 END)) / 365,
-             4)                                                 AS \"Tempo de Efetivo Exercicio\",
+             4), '.',',')                                                AS \"Tempo de Efetivo Exercicio\",
        SERVIDOR.CD_SERVIDOR                                     AS \"APURACAO - Cod. Servidor\",
        SERVIDOR.ID_SERVIDOR                                     AS \"APURACAO - ID Servidor\",
        TO_CHAR(SERVIDOR_DTC.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY') AS \"APURACAO - Data de Ingresso\",
