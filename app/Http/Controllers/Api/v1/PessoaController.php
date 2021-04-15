@@ -96,10 +96,109 @@ class PessoaController extends Controller
         return $model->retornarDadosAfastamentos($dtExercicio);
     }
 
+    /**
+     * Lista os afastamentos dos servidores
+     *
+     * @see http://redminedti.agu.gov.br/redmine/issues/173
+     * @param $dtExercicio
+     * @return array
+     */
+    public function listarApuracaoAntiguidade(Request $request)
+    {
+        $model = new Pessoa();
+        return $model->retornaApuracaoAntiguidade($request);
+    }
+
     public function buscaServidorTcu($cpf)
     {
         $modelo = new Pessoa();
         return json_encode($modelo->retornaConectaTCU($cpf), JSON_UNESCAPED_UNICODE);
+        return $modelo->retornaConectaTCU($cpf);
+    }
+
+    /**
+     * @feature 13
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaAfastamentoServidor($tpDocumento, $dtInicio)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaAfastamentoServidor($tpDocumento, $dtInicio);
+    }
+
+    /**
+     * @feature 13
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaAfastamentoUnidade($tpDocumento, $dtInicio)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaAfastamentoUnidade($tpDocumento, $dtInicio);
+    }
+
+    /**
+     * @feature 14
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaMovimentacao(Request $request)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaMovimentacao($request);
+    }
+
+    /**
+     * @feature 178
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaIngresso()
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaIngresso();
+    }
+
+    /**
+     * @feature 179
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaRescisao()
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaRescisao();
+    }
+
+    /**
+     * @feature 32
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaDimensaoUnidade()
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaDimensaoUnidade();
+    }
+
+    /**
+     * @feature 12
+     * @param $tpDocumento
+     * @param $dtInicio
+     * @return array|string[]
+     * @author Thiago Mariano <thiago.damasceno@agu.gov.br>
+     */
+    public function buscaControleEstrutura(Request $request)
+    {
+        $modelo = new Pessoa();
+        return $modelo->retornaControleEstrutura($request);
     }
 
     /**
@@ -112,7 +211,6 @@ class PessoaController extends Controller
     public function validaParametros()
     {
         $validador = $this->getValidationFactory()->make(request()->all(), $this->retornaRegras());
-
         return !$validador->fails();
     }
 

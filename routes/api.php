@@ -1,4 +1,4 @@
-    <?php
+<?php
 
 use Illuminate\Http\Request;
 
@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 */
 
 // API Consulta Banco de Dados
-Route::namespace('Api\v1')->prefix('v1')->group(function() {
+Route::namespace('Api\v1')->prefix('v1')->group(function () {
 
 
     Route::get('servidor/cpf/{cpf}', 'ServidorController@buscaServidorPorCpf');
@@ -29,7 +29,7 @@ Route::namespace('Api\v1')->prefix('v1')->group(function() {
 });
 
 // Route::namespace('Api\v1')->prefix('v1/pessoas')->middleware('auth:api')->group(function() {
-Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
+Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
 
     Route::get('forca-trabalho', 'PessoaController@listarForcaTrabalho');
     Route::get('funcoes', 'PessoaController@listarFuncoes');
@@ -43,9 +43,33 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('requisicoes', 'PessoaController@listarRequisicoes');
     Route::get('vacancias', 'PessoaController@listarVacancias');
 
+    //feature/12
+    //Route::get('controle-estrutura', 'PessoaController@buscaControleEstrutura')->name('controle-estrutura');
+
+    //feature-13
+    //Route::get('afastamento-servidor/tipoDocumento/{tpDocumento}/dataInicio/{dtInicio}', 'PessoaController@buscaAfastamentoServidor')->name('afastamento-servidor');
+    //Route::get('afastamento-unidade/tipoDocumento/{tpDocumento}/dataInicio/{dtInicio}', 'PessoaController@buscaAfastamentoUnidade')->name('afastamento-unidade');
+
+    //feature/14
+    //Route::get('movimentacao', 'PessoaController@buscaMovimentacao')->name('movimentacao');
+
+    //feature/178
+    //Route::get('ingresso', 'PessoaController@buscaIngresso')->name('ingresso');
+
+    //feature/179
+    //Route::get('rescisao', 'PessoaController@buscaRescisao')->name('rescisao');
+
+    //feature/32
+    //Route::get('dimensao-unidade', 'PessoaController@buscaDimensaoUnidade')->name('dimensao-unidade');
+
     # Redmine issue 173
     Route::get('estagios/dtExercicio/{dtExercicio}', 'PessoaController@listarEstagios');
     Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');
+
+    #Apuracao Antiguidade
+    Route::get('apuracao-antiguidade', 'PessoaController@listarApuracaoAntiguidade')->name('apuracao-antiguidade');
+
+
 });
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {

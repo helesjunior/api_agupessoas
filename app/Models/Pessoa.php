@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class Pessoa extends Base
@@ -228,40 +229,130 @@ class Pessoa extends Base
      */
     public function retornaDadosVacancias()
     {
+        ini_set("memory_limit", "512M");
+        try {
 
-        $sql = '';
-        $sql .= 'SELECT ';
-        $sql .= '    C.DS_CARGO_RH             AS "Descricao do Cargo", ';
-        $sql .= '    VW_DF.COD_MATRICULA_SIAPE AS "Matrícula SIAPE", ';
-        $sql .= '    VW_DF.NOME_SERVIDOR       AS "Nome do Servidor", ';
-        $sql .= '    V.DT_VACANCIA             AS "Vacancia - Data", ';
-        $sql .= '    TV.DS_TIPO_VACANCIA       AS "Vacancia - Tipo", ';
-        $sql .= '    CGO.NR_ANO_CONCURSO       AS "Ano Concurso" ';
-        $sql .= 'FROM ';
-        $sql .= '    AGU_RH.VACANCIA V ';
-        $sql .= 'INNER JOIN ';
-        $sql .= '    AGU_RH.PROVIMENTO P ON ';
-        $sql .= '        P.ID_PROVIMENTO = V.ID_PROVIMENTO ';
-        $sql .= 'INNER JOIN ';
-        $sql .= '    AGU_RH.CARGO_EFETIVO CGO ON ';
-        $sql .= '        CGO.ID_CARGO_EFETIVO = P.ID_CARGO_EFETIVO ';
-        $sql .= 'INNER JOIN ';
-        $sql .= '    AGU_RH.CARGO C ON ';
-        $sql .= '        C.ID_CARGO = CGO.ID_CARGO ';
-        $sql .= 'INNER JOIN ';
-        $sql .= '    AGU_RH.TIPO_VACANCIA TV ON ';
-        $sql .= '        TV.ID_TIPO_VACANCIA = V.ID_TIPO_VACANCIA ';
-        $sql .= 'INNER JOIN ';
-        $sql .= '    AGU_RH.VW_APOIO_DADOFUNCIONAL VW_DF ON ';
-        $sql .= '        VW_DF.ID_SERVIDOR = CGO.ID_SERVIDOR ';
-        $sql .= 'WHERE ';
-        $sql .= '    V.DT_OPERACAO_EXCLUSAO IS NULL ';
-        $sql .= '    AND P.DT_OPERACAO_EXCLUSAO IS NULL ';
-        $sql .= '    AND CGO.DT_OPERACAO_EXCLUSAO IS NULL ';
-        $sql .= '    AND C.DT_OPERACAO_EXCLUSAO IS NULL ';
-        $sql .= '    AND DT_VACANCIA IS NOT NULL ';
+            DB::beginTransaction();
+            $sql = DB::select("SELECT DISTINCT TRIM(C.DS_CARGO_RH)                            AS \"DESCRICAO DO CARGO\",
+                VW_DF.COD_MATRICULA_SIAPE                AS \"MATRICULA SIAPE\",
+                TRIM(VW_DF.NOME_SERVIDOR)                      AS \"NOME DO SERVIDOR\",
+                SER.NR_CPF_OPERADOR,
+                TO_CHAR(V.DT_VACANCIA, 'DD/MM/YYYY')     AS \"VACANCIA - DATA\",
+                TRIM(TV.DS_TIPO_VACANCIA)                AS \"VACANCIA - TIPO\",
+                CGO.NR_ANO_CONCURSO                      AS \"ANO CONCURSO\",
+                DOC.NR_DOCUMENTACAO                      AS CPF,
+                TO_CHAR(SER.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO,
+                TRIM(MOV.CD_LOTACAO)                     AS \"COD. LOTACAO EXERCICIO\",
+                TRIM(MOV.DS_LOTACAO)                     AS \"LOTACAO EXERCICIO\",
+                TRIM(LOT.DS_LOTACAO)                     AS \"DESCRICAO LOTACAO\",
+                CASE SER.CD_SEXO
+                    WHEN 'M' THEN 'MASCULINO'
+                    ELSE 'FEMININO'
+                END AS CD_SEXO,
+                TO_CHAR(SER.DT_NASCIMENTO, 'DD/MM/YYYY') AS DT_NASCIMENTO
+        ,LOT.CD_LOTACAO                                  AS \"CODIGO UNIDADE EXERCICIO\"
+        ,UF.SG_UF                                        AS UF
+        ,MU.NM_MUNICIPIO || ' - ' || UF.SG_UF            AS \"CIDADE DA UNIDADE\"
+        ,NI.DS_NIVEL                                     AS \"NIVEL\"
+        ,RJ.DS_REGIME_JURIDICO                           AS \"REGIME JURIDICO\"
+        ,TRIM(TS.DS_TIPO_SERVIDOR)                             AS \"SITUACAO FUNCIONAL\"
+        ,TRIM(LT.SG_ORGAO)                                     AS \"ORGAO DE ORIGEM\"
+        ,VW.DESCRICAO_TIPO_PROVIMENTO
+FROM AGU_RH.VACANCIA V
+         -- LEFT JOIN PROVIMENTO PRO ON PRO.ID_PROVIMENTO = V.ID_PROVIMENTO
+         -- LEFT JOIN VW_REL_PROVIMENTO VW ON VW.ID_TIPO_PROVIMENTO = PRO.ID_TIPO_PROVIMENTO
+         INNER JOIN
+     AGU_RH.PROVIMENTO P ON
+             P.ID_PROVIMENTO = V.ID_PROVIMENTO
+         INNER JOIN
+     AGU_RH.CARGO_EFETIVO CGO ON
+             CGO.ID_CARGO_EFETIVO = P.ID_CARGO_EFETIVO
+         INNER JOIN
+     AGU_RH.CARGO C ON
+             C.ID_CARGO = CGO.ID_CARGO
+         INNER JOIN
+     AGU_RH.TIPO_VACANCIA TV ON
+             TV.ID_TIPO_VACANCIA = V.ID_TIPO_VACANCIA
+         INNER JOIN
+     AGU_RH.VW_APOIO_DADOFUNCIONAL VW_DF ON
+             VW_DF.ID_SERVIDOR = CGO.ID_SERVIDOR
+         JOIN
+     AGU_RH.DOCUMENTACAO DOC ON
+                 DOC.ID_SERVIDOR = VW_DF.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+         INNER JOIN
+     AGU_RH.SERVIDOR SER ON SER.ID_SERVIDOR = VW_DF.ID_SERVIDOR
+         JOIN
+     PROVIMENTO PRO ON PRO.ID_PROVIMENTO = V.ID_PROVIMENTO
+         JOIN
+     VW_REL_PROVIMENTO VW ON VW.ID_TIPO_PROVIMENTO = PRO.ID_TIPO_PROVIMENTO AND VW.ID_SERVIDOR = VW_DF.ID_SERVIDOR
+         LEFT JOIN
+     VW_REL_CARGOEFETIVO CAR ON CAR.ID_SERVIDOR = VW_DF.ID_SERVIDOR
+         LEFT JOIN
+     AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
+         LEFT JOIN
+     AGU_RH.REGIME_JURIDICO RJ ON RJ.ID_REGIME_JURIDICO = CES.ID_REGIME_JURIDICO_DESTINO
+         LEFT JOIN
+     AGU_RH.TIPO_SERVIDOR TS ON SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR
+         LEFT JOIN (SELECT U.ID_SERVIDOR,
+                           U.ULTIMA,
+                           U.ID_LOTACAO_EXERCICIO,
+                           U.CD_LOTACAO,
+                           U.DS_LOTACAO
+                    FROM (
+                             SELECT MAX(ID_MOVIMENTACAO) ULTIMA,
+                                    ID_SERVIDOR,
+                                    ID_LOTACAO_EXERCICIO,
+                                    CD_LOTACAO,
+                                    DS_LOTACAO
+                             FROM MOVIMENTACAO MOV
+                                      LEFT JOIN LOTACAO LOT ON LOT.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                             GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO, CD_LOTACAO, DS_LOTACAO
+                         ) U
+                             LEFT JOIN
+                         MOVIMENTACAO N ON
+                                 N.ID_MOVIMENTACAO = U.ULTIMA
+                             LEFT JOIN
+                         ORGAO O ON
+                                 O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+) MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+         LEFT JOIN
+     AGU_RH.LOTACAO LOT ON LOT.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+         LEFT JOIN
+     AGU_RH.ENDERECO EN ON EN.ID_ENDERECO = LOT.ID_ENDERECO
+         LEFT JOIN
+     AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
+         LEFT JOIN
+     AGU_RH.UF UF ON MU.ID_UF = UF.ID_UF
+         LEFT JOIN
+     AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
 
-        return DB::select($sql);
+         JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+         JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+         LEFT JOIN NIVEL NI ON CA.ID_NIVEL = NI.ID_NIVEL
+
+         JOIN (SELECT U.ID_SERVIDOR, O.SG_ORGAO
+               FROM (SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                     FROM MOVIMENTACAO
+                     GROUP BY ID_SERVIDOR
+                    ) U
+                        LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                        LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+) LT ON
+        LT.ID_SERVIDOR = SER.ID_SERVIDOR
+
+WHERE V.DT_OPERACAO_EXCLUSAO IS NULL
+  AND P.DT_OPERACAO_EXCLUSAO IS NULL
+  AND CGO.DT_OPERACAO_EXCLUSAO IS NULL
+  AND C.DT_OPERACAO_EXCLUSAO IS NULL
+  AND DT_VACANCIA IS NOT NULL
+");
+            DB::commit();
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+
     }
 
     /**
@@ -430,6 +521,721 @@ class Pessoa extends Base
             ->first();
 
         return $result ? $result : die("CPF não consta na Base de Dados de Membros da AGU.");
+
+    }
+
+
+    public function retornaAfastamentoServidor($tpDocumento, $dtInicio)
+    {
+
+        ini_set("memory_limit", "512M");
+
+
+        if (!is_numeric($tpDocumento)) {
+            return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+            Carbon::parse($dtInicio)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return ['error', 'Formato inválido para data início, formato aceito (d/m/Y ex: 01/01/2020), por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+
+            $sql = DB::select('
+            SELECT DISTINCT "NOME DO SERVIDOR"
+                 , CARGO
+                 , CPF
+                 , SEXO
+                 , IDADE
+                 , "CODIGO UNIDADE EXERCICIO"
+                 , UF
+                 , "CIDADE DA UNIDADE"
+                 , "NIVEL"
+                 , "REGIME JURIDICO"
+                 , SIAPE
+                 , "UNIDADE DE EXERCICIO"
+                 , "CODIGO DO AFASTAMENTO"
+                 , "DESCRICAO TIPO AFASTAMENTO"
+                 , "DESCRICAO CID (TIPO DE DOENCA)"
+                 , "DATA DE INICIO DO AFASTAMENTO"
+                 , "DATA FINAL DO AFASTAMENTO"
+                 , DT_MOV
+                 , DT_INICIO_MOVIMENTACAO
+                 , "SITUACAO FUNCIONAL"
+                 , "ORGAO DE ORIGEM"
+            from (SELECT TRIM(SER.NM_SERVIDOR)                                                AS "NOME DO SERVIDOR",
+                         TRIM(CA.DS_CARGO_RH)                                                 AS CARGO,
+                         DOC.NR_DOCUMENTACAO                                                  AS CPF,
+                         DF.CD_MATRICULA_SIAPE                                                AS SIAPE,
+                         TRIM(LOT1.DS_LOTACAO)                                                      AS "UNIDADE DE EXERCICIO",
+                         TA.CD_TIPO_AFASTAMENTO                                               AS "CODIGO DO AFASTAMENTO",
+                         TRIM(TA.DS_TIPO_AFASTAMENTO)                                               AS "DESCRICAO TIPO AFASTAMENTO",
+                         TRIM(A.DS_CID_AFASTAMENTO)                                                 AS "DESCRICAO CID (TIPO DE DOENCA)",
+                         A.DT_INICIO_AFASTAMENTO                                              AS "DATA DE INICIO DO AFASTAMENTO",
+                         A.DT_FIM_AFASTAMENTO                                                 AS "DATA FINAL DO AFASTAMENTO"
+                          ,
+                         MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                          ,
+                         MOV.DT_INICIO_MOVIMENTACAO,
+
+                         SER.CD_SEXO                                                          AS SEXO,
+                         LOT1.CD_LOTACAO                                                      AS "CODIGO UNIDADE EXERCICIO",
+
+                         UF.SG_UF                                                             AS UF,
+                         MU.NM_MUNICIPIO || \' - \' || UF.SG_UF                                 AS "CIDADE DA UNIDADE",
+                         NI.DS_NIVEL                                                          AS "NIVEL",
+                         RJ.DS_REGIME_JURIDICO                                                AS "REGIME JURIDICO",
+                         TRIM(TS.DS_TIPO_SERVIDOR)                                                  AS "SITUACAO FUNCIONAL",
+                         TRUNC(MONTHS_BETWEEN(A.DT_FIM_AFASTAMENTO, SER.DT_NASCIMENTO) / 12)  AS IDADE,
+                         LT.SG_ORGAO                                                          AS "ORGAO DE ORIGEM"
+                  FROM AGU_RH.SERVIDOR SER
+                           LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON
+                           RJ.ID_REGIME_JURIDICO = CES.ID_REGIME_JURIDICO_DESTINO
+                           LEFT JOIN AGU_RH.TIPO_SERVIDOR TS ON SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR
+                           JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                           JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                           LEFT JOIN NIVEL NI ON CA.ID_NIVEL = NI.ID_NIVEL
+                           JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
+                           LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                           LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                           LEFT JOIN AGU_RH.ENDERECO EN ON
+                      EN.ID_ENDERECO = LOT1.ID_ENDERECO
+                           LEFT JOIN AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
+                           LEFT JOIN AGU_RH.UF UF ON
+                      MU.ID_UF = UF.ID_UF
+                           JOIN (
+                      SELECT U.ID_SERVIDOR,
+                                        O.DS_ORGAO || \' - \' || O.SG_ORGAO AS SG_ORGAO
+                                        FROM (
+                                        SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                                        FROM MOVIMENTACAO
+                                        GROUP BY ID_SERVIDOR
+                           ) U
+                               LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                               LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                  ) LT ON
+                      LT.ID_SERVIDOR = SER.ID_SERVIDOR
+                           JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                           INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                  WHERE DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\')
+                    AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                  ORDER BY NM_SERVIDOR ASC
+                         , DT_INICIO_AFASTAMENTO ASC) s
+            where s.DT_MOV = s.DT_INICIO_MOVIMENTACAO
+', [$tpDocumento, $dtInicio]);
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o afastamento por unidade
+     * @feature 13
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+
+    public function retornaAfastamentoUnidade($tpDocumento, $dtInicio)
+    {
+
+        ini_set("memory_limit", "5112M");
+
+
+        if (!is_numeric($tpDocumento)) {
+            return ['error', 'Formato inválido para tipo documento, o tipo de documento só aceita números, por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+            Carbon::parse($dtInicio)->format('d/m/Y');
+        } catch (\Exception $e) {
+            return ['error', 'Formato inválido para data início, formato aceito (d/m/Y ex: 01/01/2020), por favor verifique o formato e tente novamente'];
+        }
+
+        try {
+
+            $sql = '
+            SELECT
+                 "UNIDADE DE EXERCICIO"
+                 ,"DESCRICAO TIPO AFASTAMENTO"
+                 ,"DESCRICAO CID (TIPO DE DOENCA)"
+                 ,"DATA DE INICIO DO AFASTAMENTO"
+                 ,"DATA FINAL DO AFASTAMENTO"
+            FROM
+                (SELECT DISTINCT
+                     SER.NM_SERVIDOR AS "NOME DO SERVIDOR",
+                     CA.DS_CARGO_RH  AS CARGO,
+                     DOC.NR_DOCUMENTACAO AS CPF,
+                     DF.CD_MATRICULA_SIAPE AS SIAPE,
+                     TRIM(LOT1.DS_LOTACAO) AS "UNIDADE DE EXERCICIO",
+                     TA.CD_TIPO_AFASTAMENTO AS "CODIGO DO AFASTAMENTO",
+                     TRIM(TA.DS_TIPO_AFASTAMENTO) AS "DESCRICAO TIPO AFASTAMENTO",
+                     TRIM(A.DS_CID_AFASTAMENTO) AS "DESCRICAO CID (TIPO DE DOENCA)",
+                     A.DT_INICIO_AFASTAMENTO AS "DATA DE INICIO DO AFASTAMENTO",
+                     A.DT_FIM_AFASTAMENTO AS "DATA FINAL DO AFASTAMENTO"
+                         ,MAX(MOV.DT_INICIO_MOVIMENTACAO) OVER (PARTITION BY A.ID_AFASTAMENTO) as DT_MOV
+                         ,MOV.DT_INICIO_MOVIMENTACAO
+                FROM
+                     AGU_RH.SERVIDOR SER
+                         JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                         JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                         JOIN AGU_RH.DOCUMENTACAO DOC ON SER.ID_SERVIDOR = DOC.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = ?
+                         LEFT JOIN AGU_RH.DADO_FUNCIONAL DF ON DF.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.MOVIMENTACAO MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                         LEFT JOIN AGU_RH.LOTACAO LOT1 ON LOT1.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                         JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                         INNER JOIN AGU_RH.TIPO_AFASTAMENTO TA ON TA.ID_TIPO_AFASTAMENTO = A.ID_TIPO_AFASTAMENTO
+                WHERE
+                         DT_INICIO_AFASTAMENTO >= TO_DATE(?, \'DD/MM/YY\') AND MOV.DT_INICIO_MOVIMENTACAO < DT_INICIO_AFASTAMENTO
+                ORDER
+                     BY NM_SERVIDOR ASC
+                      , DT_INICIO_AFASTAMENTO ASC) s
+                WHERE
+                    s.DT_MOV = s.DT_INICIO_MOVIMENTACAO';
+
+            return DB::select($sql, [$tpDocumento, $dtInicio]);
+
+
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o afastamento por unidade
+     * @feature 13
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaMovimentacao()
+    {
+
+        ini_set("memory_limit", "512M");
+        ini_set("set_time_limit", "600");
+
+        try {
+
+            DB::beginTransaction();
+            $sql = DB::select("WITH cargo_eftv as (
+                                    SELECT DISTINCT CE.ID_CARGO_EFETIVO AS id_cargo_ef,
+                                           TRIM(CGO.DS_CARGO_RH)     as cargo_rh
+                                    FROM AGU_RH.CARGO_EFETIVO CE
+                                             INNER JOIN AGU_RH.CARGO CGO ON (CE.id_cargo = CGO.ID_CARGO)
+                                             INNER JOIN AGU_RH.PROVIMENTO P ON (P.ID_CARGO_EFETIVO = CE.id_cargo_efetivo)
+                                             INNER JOIN AGU_RH.CARGO C ON C.ID_CARGO = CE.ID_CARGO
+                                             LEFT JOIN AGU_RH.CARREIRA CA ON CA.ID_CARREIRA = C.ID_CARREIRA
+                                    WHERE CE.DT_OPERACAO_EXCLUSAO IS NULL
+                                      AND C.DT_OPERACAO_EXCLUSAO IS NULL
+                                      AND P.DT_OPERACAO_EXCLUSAO IS NULL
+                                    )
+                                    SELECT DISTINCT CE1.ID_CARGO_EFETIVO,
+                                                DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
+                                                SER.NR_CPF_OPERADOR,
+                                                TRIM(TS.DS_TIPO_SERVIDOR),
+                                                TRIM(LO.DS_LOTACAO) AS DESCRICAO_LOT_ORIGEM,
+                                                TRIM(LE.DS_LOTACAO) AS DESCRICAO_LOT_EXER,
+                                                TO_CHAR(CE1.DT_INGRESSO_SERVIDOR, 'DD/MM/YYYY'),
+                                                TRIM(CA.cargo_rh),
+                                                MOV.ID_TIPO_MOVIMENTACAO,
+                                                MOV.DESCRICAO_MOVIMENTACAO,
+                                                TRIM(MOV.ORGAO_MOVIMENTACAO),
+                                                MOV.ID_LOTACAO_ORIGEM,
+                                                TRIM(MOV.DESCRICAO_LOT_ORIGEM),
+                                                MOV.COD_LOT_ORIGEM,
+                                                TRIM(MOV.SIGLA_LOT_ORIGEM),
+                                                MOV.IDP_ORIGEM,
+                                                MOV.ID_LOTACAO_EXERCICIO,
+                                                TRIM(MOV.DESCRICAO_LOT_EXER),
+                                                MOV.COD_LOT_EXER,
+                                                TRIM(MOV.SIGLA_LOT_EXER),
+                                                MOV.IDP_EXER,
+                                                TO_CHAR(MOV.DATA_INICIO, 'DD/MM/YYYY'),
+                                                TO_CHAR(MOV.DATA_FINAL, 'DD/MM/YYYY'),
+                                                TRIM(MOV.NOME_SERVIDOR),
+                                                MOV.DESCRICAO_MUNICIPIO_LOT_EXER,
+                                                MOV.SIGLA_UF_LOT_EXER
+                                    FROM AGU_RH.VW_REL_MOVIMENTACAO MOV
+                                         JOIN AGU_RH.DOCUMENTACAO DOC ON DOC.ID_SERVIDOR = MOV.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                                         INNER JOIN SERVIDOR SER ON SER.ID_SERVIDOR = MOV.ID_SERVIDOR
+                                         INNER JOIN AGU_RH.CARGO_EFETIVO CE1 ON CE1.ID_SERVIDOR = MOV.ID_SERVIDOR
+                                         INNER JOIN AGU_RH.TIPO_SERVIDOR TS ON (SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR)
+                                         INNER JOIN AGU_RH.LOTACAO LO ON (LO.ID_LOTACAO = MOV.ID_LOTACAO_ORIGEM)
+                                         INNER JOIN AGU_RH.LOTACAO LE ON (LE.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO)
+                                         inner join cargo_eftv CA ON (CA.id_cargo_ef = CE1.ID_CARGO_EFETIVO)");
+            DB::commit();
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o 4.F - Ingresso
+     * @feature 178
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaIngresso()
+    {
+        ini_set("memory_limit", "512M");
+        try {
+
+            DB::beginTransaction();
+            $sql = DB::select("WITH dados as (
+                                    SELECT DISTINCT
+                                                    DAD.DATA_INGRESSO                  AS \"Data Ingresso\",
+                                                    TRIM(CAR.DESCRICAO_CARGO)            AS \"Descricao do Cargo\",
+                                                    DAD.CODIGO_MATRICULA                 AS \"Matricula SIAPE\",
+                                                    TRIM(DAD.NOME_SERVIDOR)                    AS \"Nome do Servidor\",
+                                                    DOC.NR_DOCUMENTACAO                  AS CPF_SERVIDOR,
+                                                    SER.DT_NASCIMENTO,
+                                                    SER.ID_SERVIDOR,
+                                                    DAD.DESC_TIPO_ADM                    AS \"Tipo Admissao - Descr.\",
+                                                    CAR.ANO_CONCURSO                     AS \"Concurso - Ano\",
+                                                    DAD.VINCULO_RAIS                     AS \"Rais Vinculo - Descr.\",
+                                                    CASE SER.CD_SEXO
+                                                        WHEN 'M' THEN 'Masculino'
+                                                        ELSE 'Feminino'
+                                                        END                              as CD_SEXO,
+                                                    LOT.CD_LOTACAO                       AS \"CODIGO UNIDADE EXERCICIO\",
+                                                    UF.SG_UF                             AS UF,
+                                                    MU.NM_MUNICIPIO || ' - ' || UF.SG_UF AS \"CIDADE DA UNIDADE\",
+                                                    NI.DS_NIVEL                          AS \"NIVEL\",
+                                                    RJ.DS_REGIME_JURIDICO                AS \"REGIME JURIDICO\",
+                                                    TS.DS_TIPO_SERVIDOR                  AS \"SITUACAO FUNCIONAL\",
+                                                    LT.SG_ORGAO                          AS \"ORGAO DE ORIGEM\"
+
+                                    FROM VW_REL_CARGOEFETIVO CAR
+                                        JOIN AGU_RH.DOCUMENTACAO DOC ON DOC.ID_SERVIDOR = CAR.ID_SERVIDOR AND DOC.ID_TIPO_DOCUMENTACAO = 1
+                                        RIGHT JOIN VW_REL_DADOFUNCIONAL DAD ON DAD.ID_SERVIDOR = CAR.ID_SERVIDOR
+                                        LEFT JOIN AGU_RH.SERVIDOR SER ON SER.ID_SERVIDOR = CAR.ID_SERVIDOR
+                                        LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SER.ID_SERVIDOR
+                                        LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON RJ.ID_REGIME_JURIDICO = CES.ID_REGIME_JURIDICO_DESTINO
+                                        LEFT JOIN AGU_RH.TIPO_SERVIDOR TS ON SER.ID_TIPO_SERVIDOR = TS.ID_TIPO_SERVIDOR
+                                        LEFT JOIN (
+                                        SELECT U.ID_SERVIDOR,
+                                        U.ULTIMA,
+                                        U.ID_LOTACAO_EXERCICIO,
+                                        U.DT_INICIO_MOVIMENTACAO
+                                        FROM (
+                                        SELECT MAX(ID_MOVIMENTACAO) ULTIMA,
+                                        ID_SERVIDOR,
+                                        ID_LOTACAO_EXERCICIO,
+                                        DT_INICIO_MOVIMENTACAO
+                                        FROM MOVIMENTACAO
+                                        GROUP BY ID_SERVIDOR, ID_LOTACAO_EXERCICIO, DT_INICIO_MOVIMENTACAO
+                                        ) U
+                                        LEFT JOIN
+                                        MOVIMENTACAO N ON
+                                        N.ID_MOVIMENTACAO = U.ULTIMA
+                                        LEFT JOIN
+                                        ORGAO O ON
+                                        O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                                        ) MOV ON MOV.ID_SERVIDOR = SER.ID_SERVIDOR
+                                        LEFT JOIN AGU_RH.LOTACAO LOT ON LOT.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                                        LEFT JOIN AGU_RH.ENDERECO EN ON EN.ID_ENDERECO = LOT.ID_ENDERECO
+                                        LEFT JOIN AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
+                                        LEFT JOIN AGU_RH.UF UF ON MU.ID_UF = UF.ID_UF
+                                        JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SER.ID_SERVIDOR
+                                        JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                                        LEFT JOIN NIVEL NI ON CA.ID_NIVEL = NI.ID_NIVEL
+                                        left JOIN AGU_RH.AFASTAMENTO A ON A.ID_SERVIDOR = SER.ID_SERVIDOR
+                                        JOIN (SELECT U.ID_SERVIDOR,
+                                        O.DS_ORGAO || ' - ' || O.SG_ORGAO AS SG_ORGAO
+                                        FROM (
+                                        SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                                        FROM MOVIMENTACAO
+                                        GROUP BY ID_SERVIDOR
+                                        ) U
+                                        LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                                        LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                                        ) LT ON
+                                        LT.ID_SERVIDOR = SER.ID_SERVIDOR
+                                    WHERE DAD.id_rh = 1
+                                      AND TO_DATE(DAD.DATA_INGRESSO,'DD-MM-YYYY') = MOV.DT_INICIO_MOVIMENTACAO
+                                      and CAR.ANO_CONCURSO is not null
+                                ),
+                                     afast as (
+                                         SELECT ID_SERVIDOR,MAX(DT_FIM_AFASTAMENTO) as DT_FIM_AFASTAMENTO FROM AGU_RH.AFASTAMENTO group by ID_SERVIDOR
+                                     )
+                                select distinct
+                                     floor(MONTHS_BETWEEN(TO_DATE(dados.\"Data Ingresso\",'DD-MM-YYYY'), dados.DT_NASCIMENTO) / 12)  AS IDADE,
+                                     dados.*
+                                from dados left join afast on afast.ID_SERVIDOR = dados.ID_SERVIDOR");
+
+            DB::commit();
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o 5.F - Rescisao
+     * @feature 179
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaRescisao()
+    {
+
+        ini_set("memory_limit", "512M");
+        try {
+            DB::beginTransaction();
+            $sql = DB::select("SELECT DISTINCT
+                LPAD(D.NR_DOCUMENTACAO,11,0) CPF,
+                SERVIDOR.NM_SERVIDOR,
+                floor(MONTHS_BETWEEN(DADO_FUNCIONAL.DT_RESCISAO, SERVIDOR.DT_NASCIMENTO) / 12)  AS IDADE,
+                DADO_FUNCIONAL.DT_RESCISAO,
+                CASE SERVIDOR.CD_SEXO
+                    WHEN 'M' THEN 'MASCULINO'
+                         ELSE 'FEMININO'
+                END as SEXO,
+                LOT.CD_LOTACAO  AS \"CODIGO_UNIDADE_EXERCICIO\",
+                UF.SG_UF        AS \"UF\",
+                MU.NM_MUNICIPIO || ' - ' || UF.SG_UF AS \"CIDADE DA UNIDADE\",
+                NI.DS_NIVEL                          AS \"NIVEL\",
+                RJ.DS_REGIME_JURIDICO                AS \"REGIME JURIDICO\",
+                TRIM(TIPO_SERVIDOR.DS_TIPO_SERVIDOR) AS \"SITUACAO FUNCIONAL\",
+                LT.SG_ORGAO                          AS \"ORGAO DE ORIGEM\",
+                DADO_FUNCIONAL.CD_MATRICULA_SIAPE,
+                CASE
+                WHEN SERVIDOR.IN_STATUS_SERVIDOR = 1 THEN
+                'Ativo'
+                else
+                'Inativo'
+                end Status
+                from AGU_RH.SERVIDOR
+                INNER JOIN AGU_RH.TIPO_SERVIDOR ON TIPO_SERVIDOR.id_tipo_servidor = SERVIDOR.id_tipo_servidor
+                LEFT JOIN AGU_RH.DADO_FUNCIONAL ON DADO_FUNCIONAL.id_servidor = SERVIDOR.id_servidor
+                LEFT JOIN DOCUMENTACAO D ON D.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR AND D.ID_TIPO_DOCUMENTACAO = 1
+                LEFT JOIN (
+                SELECT U.ID_SERVIDOR, U.ULTIMA, N.ID_LOTACAO_EXERCICIO
+                FROM (
+                SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                FROM MOVIMENTACAO
+                GROUP BY ID_SERVIDOR
+                ) U
+                LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                ) MOV ON MOV.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN AGU_RH.LOTACAO LOT ON LOT.ID_LOTACAO = MOV.ID_LOTACAO_EXERCICIO
+                LEFT JOIN AGU_RH.ENDERECO EN ON EN.ID_ENDERECO = LOT.ID_ENDERECO
+                LEFT JOIN AGU_RH.MUNICIPIO MU ON MU.ID_MUNICIPIO = EN.ID_MUNICIPIO
+                LEFT JOIN AGU_RH.UF UF ON MU.ID_UF = UF.ID_UF
+                LEFT JOIN AGU_RH.CARGO_EFETIVO CE ON CE.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN AGU_RH.CARGO CA ON CA.ID_CARGO = CE.ID_CARGO
+                LEFT JOIN NIVEL NI ON CA.ID_NIVEL = NI.ID_NIVEL
+                LEFT JOIN AGU_RH.CESSAO CES ON CES.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                LEFT JOIN AGU_RH.REGIME_JURIDICO RJ ON RJ.ID_REGIME_JURIDICO = DADO_FUNCIONAL.ID_REGIME_JURIDICO
+                LEFT JOIN ( SELECT U.ID_SERVIDOR,
+                O.DS_ORGAO || ' - ' || O.SG_ORGAO AS SG_ORGAO
+                 FROM (
+                SELECT MAX(ID_MOVIMENTACAO) ULTIMA, ID_SERVIDOR
+                FROM MOVIMENTACAO
+                GROUP BY ID_SERVIDOR
+            ) U
+                LEFT JOIN MOVIMENTACAO N ON N.ID_MOVIMENTACAO = U.ULTIMA
+                LEFT JOIN ORGAO O ON O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+            ) LT ON LT.ID_SERVIDOR = SERVIDOR.ID_SERVIDOR
+                 WHERE SERVIDOR.DT_OPERACAO_EXCLUSAO IS NULL
+                 AND DADO_FUNCIONAL.DT_OPERACAO_EXCLUSAO IS NULL
+                 AND DADO_FUNCIONAL.DT_RESCISAO IS NOT NULL
+             ORDER BY 2");
+            DB::commit();
+
+            return $sql;
+        } catch (\Exception $e) {
+            RETURN $e->getMessage();
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o Dimensão Unidade
+     * @feature 32
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaDimensaoUnidade()
+    {
+        ini_set("memory_limit", "512M");
+        try {
+
+            DB::beginTransaction();
+            $sql = DB::select("
+                                        SELECT DISTINCT
+                                            PAI.CD_LOTACAO,
+                                            TRIM(PAI.SG_LOTACAO) as DS_LOTACAO_PAI,
+                                            LOTACAO.CD_LOTACAO,
+                                            TRIM(LOTACAO.SG_LOTACAO),
+                                            LOTACAO.CD_SIORG,
+
+                                            TRIM(LOTACAO.DS_LOTACAO) AS DS_LOTACAO,
+                                            TRIM(PAI.DS_LOTACAO) AS DS_LOTACAO_PAI1,
+
+                                            CASE
+                                                WHEN LOTACAO.IN_ATIVO = 1 THEN 'Sim'
+                                                WHEN LOTACAO.IN_ATIVO = 0 THEN 'Não'
+                                                ELSE ''
+                                                END  AS ATIVO,
+                                            LOTACAO.CD_UORG,
+                                            TO_CHAR(LOTACAO.DT_CRIACAO_LOTACAO, 'DD/MM/YYYY') AS DT_CRIACAO_LOTACAO,
+                                            TO_CHAR(LOTACAO.DT_EXTINCAO_LOTACAO, 'DD/MM/YYYY') AS DT_EXTINCAO_LOTACAO,
+                                            TIPO_LOTACAO.DS_TIPO_LOTACAO,
+
+                                            LOTACAO.ID_SERVIDOR_TITULAR AS ID_SERVIDOR_TITULAR,
+                                            TRIM(AGU_RH.SERVIDOR.NM_SERVIDOR) AS NM_SERVIDOR_TITULAR,
+                                            S.ID_SERVIDOR AS ID_SERVIDOR_SUBSTITUTO,
+                                            TRIM(S.NM_SERVIDOR) AS NM_SERVIDOR_SUBSTITUTO,
+
+                                            TELEFONE.NR_DDD  AS DDD,
+                                            TELEFONE.NR_TELEFONE AS TELEFONE,
+
+                                            MUNICIPIO.NM_MUNICIPIO AS MUNICIPIO,
+                                            TRIM(ENDERECO.DS_ENDERECO) AS ENDERECO,
+                                            TRIM(ENDERECO.NM_BAIRRO)  AS BAIRRO,
+                                            TRIM(ENDERECO.NR_CEP)  AS CEP,
+                                            TRIM(ENDERECO.DS_COMPLEMENTO)  AS COMPLEMENTO,
+                                            UF.SG_UF AS UF,
+                                            TRIM(LOTACAO.NM_EMAIL_LOTACAO),
+                                            TO_CHAR(LOTACAO.DT_INICIO_UDP, 'DD/MM/YYYY') AS DT_INICIO_UDP,
+                                            TO_CHAR(LOTACAO.DT_EXPIRACAO_UDP, 'DD/MM/YYYY') AS DT_EXPIRACAO_UDP,
+                                            CASE
+                                                WHEN LOTACAO.IN_TIPO_NORMA_UDP = 'F' THEN 'Não'
+                                                WHEN LOTACAO.IN_TIPO_NORMA_UDP = 'I' THEN 'Sim'
+                                                ELSE ''
+                                                END  AS IN_TIPO_NORMA_UDP,
+                                            CASE
+                                                WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'I' THEN 'Não'
+                                                WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'F' THEN 'Sim'
+                                                ELSE ''
+                                                END  AS IN_TIPO_NORMA_ODS
+
+                                        FROM AGU_RH.LOTACAO,
+                                             AGU_RH.LOTACAO LOT,
+                                             AGU_RH.SERVIDOR,
+                                             AGU_RH.SERVIDOR S,
+                                             AGU_RH.TIPO_LOTACAO,
+                                             AGU_RH.LOTACAO PAI,
+                                             AGU_RH.TELEFONE,
+                                             AGU_RH.ENDERECO,
+                                             AGU_RH.MUNICIPIO,
+                                             AGU_RH.UF
+
+                                        WHERE LOTACAO.DT_OPERACAO_EXCLUSAO IS NULL
+                                          AND LOT.ID_LOTACAO (+) = AGU_RH.LOTACAO.ID_LOTACAO_PAI
+                                          AND AGU_RH.SERVIDOR.ID_SERVIDOR (+) = AGU_RH.LOTACAO.ID_SERVIDOR_TITULAR
+                                          AND S.ID_SERVIDOR (+) = AGU_RH.LOTACAO.ID_SERVIDOR_SUBSTITUTO
+                                          AND AGU_RH.TIPO_LOTACAO.ID_TIPO_LOTACAO (+) = AGU_RH.LOTACAO.ID_TIPO_LOTACAO
+                                          AND PAI.ID_LOTACAO (+) = AGU_RH.LOTACAO.ID_LOTACAO_PAI
+                                          AND TELEFONE.ID_TELEFONE (+) = AGU_RH.LOTACAO.ID_TELEFONE
+                                          AND ENDERECO.ID_ENDERECO (+) = AGU_RH.LOTACAO.ID_ENDERECO
+                                          AND AGU_RH.MUNICIPIO.ID_MUNICIPIO (+) = ENDERECO.ID_MUNICIPIO
+                                          AND AGU_RH.UF.ID_UF (+) = ENDERECO.ID_UF_ENDERECO
+                                          AND LOTACAO.ID_RH = 1
+                                        ORDER BY LOTACAO.CD_LOTACAO ASC
+                                        ");
+            DB::commit();
+
+            return $sql;
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+    /**
+     * Retorna Listagem contendo dados para o controle estrutura
+     * @feature 12
+     * @return array
+     * @author Thiago Mariano Damasceno <thiago.damasceno@agu.gov.br>
+     */
+    public function retornaControleEstrutura($request)
+    {
+        $where = array();
+        $where[] = "WHERE 1 = 1";
+
+        if ($request->get('lotacaoInicio')) {
+            $where[] = "AND AA.CD_LOTACAO >= '{$request->get('lotacaoInicio')}'";
+        }
+
+        if ($request->get('lotacaoFim')) {
+            $where[] = "AND AA.CD_LOTACAO <= '{$request->get('lotacaoFim')}'";
+        }
+
+        if ($request->get('funcao')) {
+            $request->offsetSet('funcao', strtoupper($request->get('funcao')));
+            $where[] = "AND UPPER(FG.CD_FUNCAO_GRATIFICADA) LIKE '%{$request->get('funcao')}%'";
+        }
+
+        if ($request->get('dataBase')) {
+            $where[] = "  AND AA.DT_CRIACAO_CARGO <= TO_DATE('{$request->get('dataBase')}', 'dd/MM/yyyy')";
+        }
+
+        $whereFilter = implode(" ", $where);
+
+        try {
+
+            $sql = DB::select("SELECT CASE
+                                           WHEN TRIM(AA.DS_LOTACAO) IS NULL THEN
+                                               TRIM(AA.CD_LOTACAO)
+                                           ELSE
+                                               TRIM(AA.CD_LOTACAO) || ' - ' || TRIM(AA.DS_LOTACAO)
+                                           END                                               AS LOTACAO,
+                                       CASE
+                                           WHEN TRIM(AA.DS_CARGO_FUNCAO) IS NULL THEN
+                                               TRIM(AA.CD_CARGO_FUNCAO)
+                                           ELSE
+                                               TRIM(AA.CD_CARGO_FUNCAO) || ' - ' || TRIM(AA.DS_CARGO_FUNCAO)
+                                           END                                               AS CARGO,
+                                       FG.CD_FUNCAO_GRATIFICADA                              AS FUNCAO,
+                                       NVL(TO_CHAR(AA.DT_CRIACAO_CARGO, 'DD/MM/YYYY'), '-')  AS DATA_CRIACAO_CARGO,
+                                       NVL(TO_CHAR(AA.DT_EXTINCAO_CARGO, 'DD/MM/YYYY'), '-') AS DATA_EXTINCAO_CARGO,
+                                       CASE
+                                           WHEN SV.CD_SERVIDOR IS NULL THEN
+                                               'Vago'
+                                           ELSE
+                                               SV.NM_SERVIDOR || ' (' || SV.CD_SERVIDOR || ')'
+                                           END                                               AS OCUPANTE,
+                                       CASE
+                                           WHEN NR.NR_DOCUMENTO_NORMA IS NULL THEN
+                                               '-'
+                                           ELSE
+                                                   FD.DS_FORMA_DOCUMENTO ||
+                                                   ' ' ||
+                                                   NR.NR_DOCUMENTO_NORMA ||
+                                                   ' de ' ||
+                                                   TO_CHAR(NR.DT_DOCUMENTO_NORMA, 'DD/MM/YYYY') ||
+                                                   '. ' ||
+                                                   TP.DS_TIPO_PUBLICACAO ||
+                                                   ' Nº ' ||
+                                                   NR.NR_PUBLICACAO_NORMA ||
+                                                   ' de ' ||
+                                                   TO_CHAR(NR.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||
+                                                   '.'
+                                           END                                               AS ATO,
+                                       NVL(TO_CHAR(AA.DATA_POSSE, 'DD/MM/YYYY'), '-')        AS POSSE,
+                                       NVL(TO_CHAR(AA.DATA_EXERCICIO, 'DD/MM/YYYY'), '-')    AS EXERCICIO,
+                                       LT.SG_ORGAO                                           AS ORIGEM
+                                FROM (
+                                         SELECT DISTINCT CF.ID_FUNCAO_GRATIFICADA,
+                                                CF.ID_CARGO_FUNCAO,
+                                                CF.CD_CARGO_FUNCAO,
+                                                CF.DS_CARGO_FUNCAO,
+                                                CF.ID_RH,
+                                                LT.CD_LOTACAO,
+                                                LT.DS_LOTACAO,
+                                                0                                            AS SUBSTITUTO,
+                                                FC.ID_SERVIDOR                               AS ID_SERVIDOR,
+                                                FC.ID_NORMA_NOMEACAO                         AS ID_NORMA,
+                                                FC.DT_POSSE                                  AS DATA_POSSE,
+                                                FC.DT_EXERCICIO                              AS DATA_EXERCICIO,
+                                                CF.DT_CRIACAO_CARGO,
+                                                CF.DT_EXTINCAO_CARGO
+                                         FROM CARGO_FUNCAO CF
+                                                  INNER JOIN
+                                              LOTACAO LT ON
+                                                      LT.ID_LOTACAO = CF.ID_LOTACAO
+                                                      -- AND LT.CD_LOTACAO = '100000002'
+                                                      AND LT.IN_ATIVO = 1
+                                                      AND LT.DT_EXTINCAO_LOTACAO IS NULL
+                                                      AND LT.DT_OPERACAO_EXCLUSAO IS NULL
+                                                  LEFT JOIN
+                                              FUNCAO_COMISSIONADA FC ON
+                                                      FC.ID_CARGO_FUNCAO = CF.ID_CARGO_FUNCAO
+                                                      AND DT_EXONERACAO IS NULL
+                                                      AND FC.DT_OPERACAO_EXCLUSAO IS NULL
+                                         WHERE CF.DT_EXTINCAO_CARGO IS NULL
+                                         UNION ALL
+                                         SELECT CF.ID_FUNCAO_GRATIFICADA,
+                                                CF.ID_CARGO_FUNCAO,
+                                                'Substituto(a)',
+                                                NULL                                        AS DS_CARGO_FUNCAO,
+                                                CF.ID_RH,
+                                                LT.CD_LOTACAO,
+                                                LT.DS_LOTACAO,
+                                                1                                           AS SUBSTITUTO,
+                                                FS.ID_SERVIDOR_SUBSTITUTO                   AS ID_SERVIDOR,
+                                                FS.ID_NORMA_INICIO_SUBST                    AS ID_NORMA,
+                                                FS.DT_INICIO_SUBSTITUICAO                   AS DATA_POSSE,
+                                                FS.DT_INICIO_SUBSTITUICAO                   AS DATA_EXERCICIO,
+                                                CF.DT_CRIACAO_CARGO,
+                                                CF.DT_EXTINCAO_CARGO
+                                         FROM CARGO_FUNCAO CF
+                                                  INNER JOIN
+                                              LOTACAO LT ON
+                                                      LT.ID_LOTACAO = CF.ID_LOTACAO
+                                                      -- AND LT.CD_LOTACAO = '100000002'
+                                                      AND LT.IN_ATIVO = 1
+                                                      AND LT.DT_EXTINCAO_LOTACAO IS NULL
+                                                      AND LT.DT_OPERACAO_EXCLUSAO IS NULL
+                                                  INNER JOIN
+                                              FUNCAO_COMISSIONADA_SUBST FS ON
+                                                      FS.ID_CARGO_FUNCAO = CF.ID_CARGO_FUNCAO
+                                                      AND DT_FINAL_SUBSTITUICAO IS NULL
+                                                      AND FS.DT_OPERACAO_EXCLUSAO IS NULL
+                                         WHERE CF.DT_EXTINCAO_CARGO IS NULL
+                                     ) AA
+                                         LEFT JOIN
+                                     FUNCAO_GRATIFICADA FG ON
+                                         FG.ID_FUNCAO_GRATIFICADA = AA.ID_FUNCAO_GRATIFICADA
+                                         LEFT JOIN
+                                     SERVIDOR SV ON
+                                         SV.ID_SERVIDOR = AA.ID_SERVIDOR
+                                         LEFT JOIN
+                                     NORMA NR ON
+                                             NR.ID_NORMA = AA.ID_NORMA
+                                             AND NR.DT_OPERACAO_EXCLUSAO IS NULL
+                                         LEFT JOIN
+                                     BASE_LEGAL BL ON
+                                         BL.ID_BASE_LEGAL = NR.ID_BASE_LEGAL
+                                         LEFT JOIN
+                                     FORMA_DOCUMENTO FD ON
+                                         FD.ID_FORMA_DOCUMENTO = BL.ID_FORMA_DOCUMENTO
+                                         LEFT JOIN
+                                     TIPO_PUBLICACAO TP ON
+                                         TP.ID_TIPO_PUBLICACAO = NR.ID_TIPO_PUBLICACAO
+                                         LEFT JOIN
+                                     (
+                                         SELECT U.ID_SERVIDOR,
+                                                O.SG_ORGAO
+                                         FROM (
+                                                  SELECT MAX(ID_MOVIMENTACAO) ULTIMA,
+                                                         ID_SERVIDOR
+                                                  FROM MOVIMENTACAO
+                                                  GROUP BY ID_SERVIDOR
+                                              ) U
+                                                  LEFT JOIN
+                                              MOVIMENTACAO N ON
+                                                  N.ID_MOVIMENTACAO = U.ULTIMA
+                                                  LEFT JOIN
+                                              ORGAO O ON
+                                                  O.ID_ORGAO = N.ID_ORGAO_MOVIMENTACAO
+                                     ) LT ON
+                                         LT.ID_SERVIDOR = SV.ID_SERVIDOR
+
+                                $whereFilter
+
+                                ORDER BY
+                                    AA.CD_LOTACAO ASC,
+                                    FG.CD_FUNCAO_GRATIFICADA ASC,
+                                    AA.ID_CARGO_FUNCAO ASC,
+                                    AA.CD_CARGO_FUNCAO ASC,
+                                    AA.SUBSTITUTO ASC");
+
+            return $sql;
+
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+
 
     }
 
