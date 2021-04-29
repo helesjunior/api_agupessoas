@@ -531,7 +531,7 @@ class Pessoa extends Base
      * Retorna Listagem contendo dados para o gerarRelatorioCovidTxt
      *
      * @return array
-     * @author Thiago Mariano <alex.apereira@agu.gov.br>
+     * @author Alex Pereira <alex.apereira@agu.gov.br>
      * @data 29/04/2021
      */
 
