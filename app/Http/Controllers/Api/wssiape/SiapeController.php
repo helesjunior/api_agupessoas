@@ -48,30 +48,23 @@ class SiapeController
     {
         $servidoresAtivos = $this->consultaTodosServidoresAtivos();
 
+
         foreach ($servidoresAtivos as $v){
 
             $idServidor = $v->id_servidor;
             $cpfServidor = $v->cpf_servidor;
 
-
             $dadosFuncionais = $this->soapClient->consultaDadosFuncionais
             ('AGUPessoas', 'AGUPessoas', '58C300S6', $cpfServidor, '40106', 'b', 'c');
             $dadosEscolaridades = $this->soapClient->consultaDadosEscolares
             ('AGUPessoas', 'AGUPessoas', '58C300S6', $cpfServidor, '40106', 'b', 'c');
-
-
-            $dadosF = [];
-            foreach ($dadosFuncionais->dadosFuncionais as $dados ){
-
-                dd($dados);
-            }
-            $retorno =  [
-
-            ];
+            $dadosPessoais = $this->soapClient->consultaDadosPessoais
+            ('AGUPessoas', 'AGUPessoas', '58C300S6', $cpfServidor, '40106', 'b', 'c');
 
 
 
         }
+        die('huhshus');
 
 
     }
@@ -85,7 +78,7 @@ class SiapeController
                 ->where('D.ID_TIPO_DOCUMENTACAO', 1)
                 ->orderBy('D.NR_DOCUMENTACAO')
                 ->select('S.ID_SERVIDOR', 'D.NR_DOCUMENTACAO as CPF_SERVIDOR');
-            return $result->take(1)->get();
+            return $result->get();
 
         } catch (\Exception $e) {
             return $e->getMessage();

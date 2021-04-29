@@ -51,5 +51,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
     Route::namespace('Api\wssiape')->prefix('wssiape')->group(function() {
-        Route::get('consultaServidor', 'siapeController@consultaServidorSiape');
+        Route::get('consulta-servidor', 'siapeController@consultaServidorSiape');
     });
