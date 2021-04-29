@@ -42,6 +42,8 @@ Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function() {
     Route::get('requisicoes', 'PessoaController@listarRequisicoes');
     Route::get('vacancias', 'PessoaController@listarVacancias');
 
+    Route::get('relatorio-covid-19/{mes}/{ano}', 'PessoaController@gerarRelatorioCovidTxt');
+
     # Redmine issue 173
     Route::get('estagios/dtExercicio/{dtExercicio}', 'PessoaController@listarEstagios');
     Route::get('afastamentos/dtExercicio/{dtExercicio}', 'PessoaController@listarAfastamentos');

@@ -526,4 +526,104 @@ class Pessoa extends Base
         return DB::select($sql);
     }
 
+
+    /**
+     * Retorna Listagem contendo dados para o gerarRelatorioCovidTxt
+     *
+     * @return array
+     * @author Thiago Mariano <alex.apereira@agu.gov.br>
+     * @data 29/04/2021
+     */
+
+    public function gerarRelatorioCovidTxt($mes, $ano)
+    {
+        if(strlen($mes) == 1) $mes = "0".$mes;
+
+        ini_set("memory_limit", "512M");
+        try {
+
+            DB::beginTransaction();
+            $results = DB::select("SELECT '0' || '40106' || '".$ano.$mes."' || '001' || RPAD(' ',40) arquivo_covid_txt FROM DUAL
+                                        UNION
+                                        SELECT '1' ||
+                                               '41691636134' ||
+                                               '40106' ||
+                                               LPAD(V74_COD_SIAPE, 7, 0) ||
+                                               T06_ANO ||
+                                               T06_MES ||
+                                               T06_DIA_INICIO ||
+                                               T06_ANO ||
+                                               T06_MES ||
+                                               T06_DIA_FIM ||
+                                               CASE WHEN T06_COD_AFASTAMENTO IN ('7795', '7796', '7797', '7798', '7799', '7800', '7996') THEN
+                                                        '0387'
+                                                    ELSE
+                                                        '0388'
+                                                   END ||
+                                               RPAD(' ',11) arquivo_covid_txt
+                                        FROM XAGU_RH.T06_FREQ_SERVIDOR
+                                                 JOIN XAGU_RH.T05_FREQ_UNIDADE
+                                                      ON T06_ANO = T05_ANO
+                                                          AND T06_MES = T05_MES
+                                                          AND T06_COD_UNIDADE = T05_COD_UNIDADE
+                                                 JOIN XAGU_ESTRUTURA.V74_PESSOAS
+                                                      ON T06_NU_CPF = V74_NUM_CPF
+                                                 LEFT JOIN XAGU_ESTRUTURA.V86_UNIDADES
+                                                           ON T06_COD_UNIDADE_FILHA = V86_COD_UNIDADE
+                                        WHERE T06_ANO = '".$ano."'
+                                          AND T06_MES = '".$mes."'
+                                          AND T06_COD_AFASTAMENTO IN ('7795',
+                                                                      '7796',
+                                                                      '7797',
+                                                                      '7798',
+                                                                      '7799',
+                                                                      '7800',
+                                                                      '8195',
+                                                                      '8595',
+                                                                      '7996')
+                                          AND (T05_SN_RH = 'E'
+                                            OR T05_SN_RH = 'R')
+                                            /*administrativos*/
+                                          --AND V74_COD_CARGO NOT IN ('408001', '410001', '410004', '414001')
+                                            /*membros*/
+                                          AND V74_COD_CARGO IN ('408001', '408002', '410001', '410002', '011002', '410004', '414001', '414017')
+                                        UNION
+                                        SELECT '9' || LPAD(COUNT(*), 6, '0') ||  RPAD(' ',48) arquivo_covid_txt
+                                        FROM XAGU_RH.T06_FREQ_SERVIDOR
+                                                 JOIN XAGU_RH.T05_FREQ_UNIDADE
+                                                      ON T06_ANO = T05_ANO
+                                                          AND T06_MES = T05_MES
+                                                          AND T06_COD_UNIDADE = T05_COD_UNIDADE
+                                                 JOIN XAGU_ESTRUTURA.V74_PESSOAS
+                                                      ON T06_NU_CPF = V74_NUM_CPF
+                                                 LEFT JOIN XAGU_ESTRUTURA.V86_UNIDADES
+                                                           ON T06_COD_UNIDADE_FILHA = V86_COD_UNIDADE
+                                        WHERE T06_ANO = '".$ano."'
+                                          AND T06_MES = '".$mes."'
+                                          AND T06_COD_AFASTAMENTO IN ('7795',
+                                                                      '7796',
+                                                                      '7797',
+                                                                      '7798',
+                                                                      '7799',
+                                                                      '7800',
+                                                                      '8195',
+                                                                      '8595',
+                                                                      '7996')
+                                          AND (T05_SN_RH = 'E'
+                                            OR T05_SN_RH = 'R')
+                                            /*administrativos*/
+                                          --AND V74_COD_CARGO NOT IN ('408001', '410001', '410004', '414001')
+                                            /*membros*/
+                                          AND V74_COD_CARGO IN ('408001', '408002', '410001', '410002', '011002', '410004', '414001', '414017')
+                                        order by arquivo_covid_txt");
+
+            return $results;
+
+        } catch (\Exception $e) {
+            return ['error', 'Ocorreu um erro no carregamento de dados, por favor tente novamente.'];
+        }
+    }
+
+
+
 }

@@ -157,6 +157,11 @@ class PessoaController extends Controller
         return isset($params[$parametro]) ? $params[$parametro] : $default;
     }
 
+    public function gerarRelatorioCovidTxt($mes, $ano)
+    {
+        $modelo = new Pessoa();
+        return json_encode($modelo->gerarRelatorioCovidTxt($mes, $ano));
+    }
 
 
 }
