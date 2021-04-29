@@ -256,5 +256,10 @@ class PessoaController extends Controller
     }
 
 
+    public function gerarRelatorioCovidTxt($mes, $ano)
+    {
+        $modelo = new Pessoa();
+        return json_encode($modelo->gerarRelatorioCovidTxt($mes, $ano));
+    }
 
 }
