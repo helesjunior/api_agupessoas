@@ -1061,7 +1061,7 @@ FROM
                 LPAD(D.NR_DOCUMENTACAO,11,0) CPF,
                 SERVIDOR.NM_SERVIDOR,
                 floor(MONTHS_BETWEEN(DADO_FUNCIONAL.DT_RESCISAO, SERVIDOR.DT_NASCIMENTO) / 12)  AS IDADE,
-                DADO_FUNCIONAL.DT_RESCISAO,
+                TO_CHAR(DADO_FUNCIONAL.DT_RESCISAO, 'DD/MM/YYYY'),
                 CASE SERVIDOR.CD_SEXO
                     WHEN 'M' THEN 'MASCULINO'
                          ELSE 'FEMININO'
