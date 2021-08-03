@@ -1508,6 +1508,9 @@ FROM
      */
     public function retornaRolResponsaveis()
     {
+        ini_set("memory_limit", "512M");
+        ini_set("set_time_limit", "600");
+
         $sql = "SELECT
             *
         FROM
@@ -1527,8 +1530,8 @@ FROM
                     '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
                     ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'       AS CPF,
                     SERVIDOR.NM_EMAIL                                       AS EMAIL,
-                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXERCICIO, 'DD/MM/YYYY')         AS DT_EXERCICIO,
-                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXONERACAO, 'DD/MM/YYYY')                       AS DT_EXONERACAO
+                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXERCICIO, 'DD-MM-YYYY')         AS DT_EXERCICIO,
+                    TO_CHAR(FUNCAO_COMISSIONADA.DT_EXONERACAO, 'DD-MM-YYYY')                       AS DT_EXONERACAO
                 FROM
                     CARGO_FUNCAO
                 LEFT JOIN
@@ -1569,8 +1572,8 @@ FROM
                     '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
                     ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'      AS CPF,
                    SERVIDOR.NM_EMAIL                                       AS EMAIL,
-                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_INICIO_SUBSTITUICAO, 'DD/MM/YYYY')     AS DT_EXERCICIO,
-                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_FINAL_SUBSTITUICAO, 'DD/MM/YYYY')         AS DT_EXONERACAO
+                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_INICIO_SUBSTITUICAO, 'DD-MM-YYYY')     AS DT_EXERCICIO,
+                   TO_CHAR(FUNCAO_COMISSIONADA_SUBST.DT_FINAL_SUBSTITUICAO, 'DD-MM-YYYY')         AS DT_EXONERACAO
                 FROM
                     CARGO_FUNCAO
                 LEFT JOIN
