@@ -37,7 +37,7 @@ class ServidorController extends Controller
      * Lista rol de responsáveis
      *
      * @see http://redminedti.agu.gov.br/redmine/issues/173
-     * @return array
+     * @return array\string[]
      */
     public function listaRolResponsaveis()
     {
@@ -45,7 +45,7 @@ class ServidorController extends Controller
 
         $responsaveis = $modelo->retornaRolResponsaveis();
 
-        return json_encode($responsaveis);
+        return $responsaveis;
     }
 
 }
