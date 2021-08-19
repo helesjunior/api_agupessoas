@@ -1614,8 +1614,17 @@ FROM
      * @data 29/04/2021
      */
 
-    public function gerarRelatorioCovidTxt($mes, $ano)
+    public function gerarRelatorioCovidTxt($tipoServidor, $mes, $ano)
     {
+        $andQuery = "";
+        if($tipoServidor == 'membros'){
+            //membros
+            $andQuery = " AND V74_COD_CARGO IN ('11002','410004','414001','410001','410002','600001','600002','408001','408002','77777000','414017','411001') ";
+        }else{
+            //servidores administrativos
+            $andQuery = " AND V74_COD_CARGO NOT IN ('11002','410004','414001','410001','410002','600001','600002','408001','408002','77777000','414017','411001') ";
+        }
+
         if(strlen($mes) == 1) $mes = "0".$mes;
 
         ini_set("memory_limit", "512M");
@@ -1660,12 +1669,9 @@ FROM
                                                                       '8195',
                                                                       '8595',
                                                                       '7996')
-                                          AND (T05_SN_RH = 'E'
-                                            OR T05_SN_RH = 'R')
-                                            /*administrativos*/
-                                          --AND V74_COD_CARGO NOT IN ('408001', '410001', '410004', '414001')
-                                            /*membros*/
-                                          AND V74_COD_CARGO IN ('408001', '408002', '410001', '410002', '011002', '410004', '414001', '414017')
+                                          AND (T05_SN_RH = 'E' OR T05_SN_RH = 'R')
+                                          /*membros OU administrativos*/
+                                          $andQuery
                                         UNION
                                         SELECT '9' || LPAD(COUNT(*), 6, '0') ||  RPAD(' ',48) arquivo_covid_txt
                                         FROM XAGU_RH.T06_FREQ_SERVIDOR
@@ -1688,12 +1694,9 @@ FROM
                                                                       '8195',
                                                                       '8595',
                                                                       '7996')
-                                          AND (T05_SN_RH = 'E'
-                                            OR T05_SN_RH = 'R')
-                                            /*administrativos*/
-                                          --AND V74_COD_CARGO NOT IN ('408001', '410001', '410004', '414001')
-                                            /*membros*/
-                                          AND V74_COD_CARGO IN ('408001', '408002', '410001', '410002', '011002', '410004', '414001', '414017')
+                                          AND (T05_SN_RH = 'E' OR T05_SN_RH = 'R')
+                                          /*membros OU administrativos*/
+                                          $andQuery
                                         order by arquivo_covid_txt");
 
             return $results;

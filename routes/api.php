@@ -31,7 +31,7 @@ Route::namespace('Api\v1')->prefix('v1')->group(function () {
 // Route::namespace('Api\v1')->prefix('v1/pessoas')->middleware('auth:api')->group(function() {
 Route::namespace('Api\v1')->prefix('v1/pessoas')->group(function () {
 
-    Route::get('relatorio-covid-19/{mes}/{ano}', 'PessoaController@gerarRelatorioCovidTxt');
+    Route::get('relatorio-covid-19/{tipoServidor}/{mes}/{ano}', 'PessoaController@gerarRelatorioCovidTxt');
     Route::get('forca-trabalho', 'PessoaController@listarForcaTrabalho');
     Route::get('funcoes', 'PessoaController@listarFuncoes');
     Route::get('antiguidade', 'PessoaController@listarAntiguidade')->name('antiguidade');
