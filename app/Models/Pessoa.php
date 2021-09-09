@@ -1529,7 +1529,7 @@ FROM
                     TO_CHAR(NORMA.DT_PUBLICACAO_NORMA, 'DD/MM/YYYY') ||'.'  AS ATO,
                     '***.'||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,4,3)||'.'
                     ||SUBSTR(DOCUMENTACAO.NR_DOCUMENTACAO,7,3)||'-**'       AS CPF,
-                    SERVIDOR.NM_EMAIL                                       AS EMAIL,
+                    SERVIDOR.NM_EMAIL_INSTITUCIONAL                         AS EMAIL,
                     TO_CHAR(FUNCAO_COMISSIONADA.DT_EXERCICIO, 'DD-MM-YYYY')         AS DT_EXERCICIO,
                     TO_CHAR(FUNCAO_COMISSIONADA.DT_EXONERACAO, 'DD-MM-YYYY')                       AS DT_EXONERACAO
                 FROM
