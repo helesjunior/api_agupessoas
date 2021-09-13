@@ -48,4 +48,19 @@ class ServidorController extends Controller
         return $responsaveis;
     }
 
+    /**
+     * Lista dados RH para PPI
+     *
+     * @see https://redminedti.agu.gov.br/redmine/issues/1008
+     * @return array\string[]
+     */
+    public function listaDadosAtualizaPpiPgd($cpf)
+    {
+        $modelo = new Pessoa();
+
+        $dados = $modelo->retornaDadosAtualizaPpiPgd($cpf);
+
+        return $dados;
+    }
+
 }
