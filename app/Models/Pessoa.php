@@ -1182,8 +1182,8 @@ FROM
                                                 ELSE ''
                                                 END  AS IN_TIPO_NORMA_UDP,
                                             CASE
-                                                WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'I' THEN 'Não'
-                                                WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'F' THEN 'Sim'
+                                                WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'I' THEN 'Sim'
+                                                WHEN LOTACAO.IN_TIPO_NORMA_ODS = 'F' THEN 'Não'
                                                 ELSE ''
                                                 END  AS IN_TIPO_NORMA_ODS
 
